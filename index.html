@@ -228,6 +228,7 @@ body{
   <div class="st">GLOBAL TENSION <span id="s-tension">—</span></div>
   <div class="st" id="st-news" style="color:#555;font-size:6px;margin-top:4px">LIVE NEWS <span id="s-news-status" style="color:#444">대기 중...</span></div>
   <div class="st" style="margin-top:2px;color:#444">LAST SYNC <span id="s-time" style="color:#555">—</span></div>
+  <div class="st" style="color:#00aacc;margin-top:6px">FLIGHTS <span id="s-flights" style="color:#00ddff">—</span></div>
 </div>
 
 <!-- Search -->
@@ -252,6 +253,9 @@ body{
   </div>
   <div class="btn-row">
     <button class="cbtn" id="btn-reset" onclick="resetView()" style="color:#aaa;border-color:#aaa;width:100%;letter-spacing:3px;">⟳ RESET VIEW</button>
+  </div>
+  <div class="btn-row">
+    <button class="cbtn" id="btn-flights" onclick="toggleFlights()" style="color:#00aacc;border-color:#00aacc;width:100%;letter-spacing:2px;">✈ FLIGHTS</button>
   </div>
   <div class="divider"></div>
   <div class="drow">
@@ -705,6 +709,28 @@ function tGlowColor(tension, type) {
   return '#ff8c00';
 }
 
+// ── Flight overlay ────────────────────────────────────────────────
+// RapidAPI Key 발급: https://rapidapi.com/adsbx/api/adsbexchange-com1
+const FLIGHT_API_KEY = 'YOUR_RAPIDAPI_KEY';  // ← 여기에 Key 입력
+let aircraftData    = [];
+let showFlights     = false;
+let fetchingFlights = false;
+// 분쟁지역 + 주요 항로 쿼리 포인트 (각 350 해리 반경)
+const FLIGHT_QUERY_POINTS = [
+  { lat:47.5, lng:33   },  // 우크라이나·러시아
+  { lat:32.0, lng:35.5 },  // 이스라엘·가자
+  { lat:27.0, lng:54   },  // 이란·걸프
+  { lat:21.0, lng:45   },  // 예멘·홍해
+  { lat:36.0, lng:37   },  // 시리아
+  { lat:28.5, lng:72   },  // 인도·파키스탄
+  { lat:20.0, lng:96   },  // 미얀마
+  { lat:37.5, lng:127  },  // 한반도
+  { lat:23.5, lng:121  },  // 대만해협
+  { lat:51,   lng:10   },  // 유럽 허브
+  { lat:40,   lng:-75  },  // 북미 동부
+  { lat:-15,  lng:-55  },  // 남미
+];
+
 // ── Draw loop ─────────────────────────────────────────────────────
 let animT  = 0;
 let playing = true, live = true;
@@ -932,6 +958,58 @@ function draw(now) {
     ctx.fill();
     ctx.restore();
   });
+
+  // ── Aircraft overlay ──────────────────────────────────────────
+  if (showFlights && aircraftData.length > 0) {
+    const fproj   = getProjection();
+    const cx0 = rotX * Math.PI / 180;   // visible face center lng
+    const cy0 = rotY * Math.PI / 180;   // visible face center lat
+    ctx.save();
+    for (const ac of aircraftData) {
+      if (ac.lat == null || ac.lon == null) continue;
+      const phi = ac.lat * Math.PI / 180;
+      const lam = ac.lon * Math.PI / 180;
+      // 후면(지구 뒷면) 점 제거
+      const vis = Math.sin(phi)*Math.sin(cy0) + Math.cos(phi)*Math.cos(cy0)*Math.cos(lam - cx0);
+      if (vis < 0.05) continue;
+      const pt = fproj([ac.lon, ac.lat]);
+      if (!pt) continue;
+      const [ax, ay] = pt;
+      const isMil = ac.military === 1;
+      const col   = isMil ? '#ff3333' : '#00eeff';
+      const r     = isMil ? 2.5 : 1.5;
+      // 코어 닷
+      ctx.globalAlpha = isMil ? 0.95 : 0.70;
+      ctx.shadowBlur  = isMil ? 10 : 5;
+      ctx.shadowColor = col;
+      ctx.fillStyle   = col;
+      ctx.beginPath();
+      ctx.arc(ax, ay, r, 0, Math.PI * 2);
+      ctx.fill();
+      // 헤딩 라인 (대원 방향)
+      if (ac.track != null) {
+        const trackR = ac.track * Math.PI / 180;
+        const sd     = 0.5 * Math.PI / 180;   // ~55km 방향 스텝
+        const lat2   = Math.asin(Math.sin(phi)*Math.cos(sd) + Math.cos(phi)*Math.sin(sd)*Math.cos(trackR));
+        const lng2   = ac.lon * Math.PI/180 + Math.atan2(
+          Math.sin(trackR)*Math.sin(sd)*Math.cos(phi),
+          Math.cos(sd) - Math.sin(phi)*Math.sin(lat2)
+        );
+        const pt2 = fproj([lng2 * 180/Math.PI, lat2 * 180/Math.PI]);
+        if (pt2) {
+          ctx.strokeStyle = col;
+          ctx.lineWidth   = 0.8;
+          ctx.globalAlpha = 0.45;
+          ctx.shadowBlur  = 0;
+          ctx.beginPath();
+          ctx.moveTo(ax, ay);
+          ctx.lineTo(pt2[0], pt2[1]);
+          ctx.stroke();
+        }
+      }
+    }
+    ctx.restore();
+  }
 
   // ── Glitch effect ─────────────────────────────────────────────
   if (glitchFrames > 0) {
@@ -1386,6 +1464,49 @@ setInterval(() => {
     if (tickEl) tickEl.textContent = generateDynamicTicker();
   }
 }, 30 * 1000);
+
+// ── Flight fetch & toggle ─────────────────────────────────────────
+async function fetchFlights() {
+  if (fetchingFlights) return;
+  if (!FLIGHT_API_KEY || FLIGHT_API_KEY === 'YOUR_RAPIDAPI_KEY') {
+    document.getElementById('s-flights').textContent = 'KEY 필요';
+    return;
+  }
+  fetchingFlights = true;
+  document.getElementById('s-flights').textContent = '...';
+  const merged = new Map();
+  for (const pt of FLIGHT_QUERY_POINTS) {
+    try {
+      const url = `https://adsbexchange-com1.p.rapidapi.com/v2/lat/${pt.lat}/lon/${pt.lng}/dist/350/`;
+      const res = await fetch(url, {
+        headers: {
+          'X-RapidAPI-Key': FLIGHT_API_KEY,
+          'X-RapidAPI-Host': 'adsbexchange-com1.p.rapidapi.com'
+        }
+      });
+      if (!res.ok) { console.warn('ADS-B HTTP', res.status); break; }
+      const data = await res.json();
+      if (data.ac) data.ac.forEach(a => {
+        if (a.lat != null && a.lon != null) merged.set(a.hex, a);
+      });
+      await new Promise(r => setTimeout(r, 250)); // API 부하 분산
+    } catch(e) { console.warn('flight fetch error', e); }
+  }
+  aircraftData = [...merged.values()];
+  fetchingFlights = false;
+  document.getElementById('s-flights').textContent = aircraftData.length || '0';
+}
+
+function toggleFlights() {
+  showFlights = !showFlights;
+  document.getElementById('btn-flights').classList.toggle('on', showFlights);
+  document.getElementById('btn-flights').style.color      = showFlights ? '#00ffff' : '#00aacc';
+  document.getElementById('btn-flights').style.borderColor= showFlights ? '#00ffff' : '#00aacc';
+  if (showFlights && aircraftData.length === 0) fetchFlights();
+}
+
+// 5분마다 자동 갱신 (켜진 경우만)
+setInterval(() => { if (showFlights) fetchFlights(); }, 5 * 60 * 1000);
 
 // ── UI controls ───────────────────────────────────────────────────
 function toggleBtn(id) { document.getElementById('btn-'+id).classList.toggle('on'); }
