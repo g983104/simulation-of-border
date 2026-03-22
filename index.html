@@ -138,7 +138,72 @@ body{
 #save-btn:hover{background:rgba(255,140,0,.08);box-shadow:0 0 12px rgba(255,140,0,.2);}
 #glitch-btn{position:fixed;bottom:42px;right:24px;z-index:50;background:transparent;border:1px solid #330033;color:#9933cc;padding:10px 16px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:3px;cursor:pointer;transition:all .2s;}
 #glitch-btn:hover{background:rgba(153,51,204,.08);box-shadow:0 0 12px rgba(153,51,204,.3);}
-</style>
+
+/* ── Mobile menu toggle button ── */
+#mob-toggle{display:none;}
+
+/* ════════════════════════════════════════
+   MOBILE  (max-width: 700px)
+   ════════════════════════════════════════ */
+@media (max-width:700px){
+  /* 타이틀 소형화 */
+  #title{top:10px;left:12px;}
+  .t-ko{font-size:15px;letter-spacing:3px;}
+  .t-en{font-size:6px;letter-spacing:5px;margin-top:3px;}
+  .t-sub{display:none;}
+
+  /* 스탯·검색 숨김 */
+  #stats{display:none;}
+  #search{display:none;}
+
+  /* 저장·글리치 버튼 숨김 */
+  #save-btn{display:none;}
+  #glitch-btn{display:none;}
+
+  /* 컨트롤 패널: 하단 full-width 드로어 */
+  #ctrl{
+    left:0;right:0;bottom:34px;width:100%;
+    border-left:none;border-right:none;border-radius:0;
+    padding:0;max-height:44px;overflow:hidden;
+    transition:max-height .3s ease;
+  }
+  #ctrl.mob-open{max-height:480px;}
+  #ctrl .cp-head{
+    padding:12px 16px;margin:0;border-bottom:1px solid rgba(255,140,0,.15);
+    cursor:pointer;display:flex;justify-content:space-between;align-items:center;
+    font-size:9px;letter-spacing:3px;color:#ff6600;opacity:1;
+  }
+  #ctrl .cp-head::after{content:'▼';font-size:8px;color:#ff6600;transition:transform .3s;}
+  #ctrl.mob-open .cp-head::after{transform:rotate(180deg);}
+  #ctrl .btn-row,#ctrl .divider,#ctrl .drow,#ctrl .legend{
+    padding:0 16px;
+  }
+  #ctrl .btn-row{padding-top:10px;}
+
+  /* 인포 패널: 하단 시트 */
+  #info{
+    top:auto;bottom:34px;right:0;left:0;
+    transform:none;width:100%;
+    max-height:55vh;overflow-y:auto;
+    border-left:none;border-right:none;border-radius:0;
+    opacity:0;transition:opacity .3s;
+    pointer-events:none;
+  }
+  #info.show{opacity:1;pointer-events:auto;}
+
+  /* 티커 약간 높게 */
+  #ticker{height:34px;}
+  .tick-text{font-size:8px;}
+
+  /* 모바일 메뉴 토글 버튼 */
+  #mob-toggle{
+    display:flex;align-items:center;justify-content:center;
+    position:fixed;bottom:42px;right:14px;z-index:60;
+    width:42px;height:42px;
+    background:rgba(3,1,0,.92);border:1px solid rgba(255,140,0,.5);
+    color:#ff8c00;font-size:16px;cursor:pointer;
+  }
+}</style>
 </head>
 <body>
 
@@ -251,6 +316,9 @@ body{
 
 <button id="save-btn" onclick="saveFile()">⬇ SAVE FILE</button>
 <button id="glitch-btn" onclick="triggerGlitch()">⚡ GLITCH</button>
+
+<!-- Mobile control toggle -->
+<button id="mob-toggle" onclick="document.getElementById('ctrl').classList.toggle('mob-open')">☰</button>
 
 <script>
 // ═══════════════════════════════════════════════════════════════
@@ -1325,6 +1393,11 @@ function togglePlay() {
   playing = !playing;
   document.getElementById('btn-play').classList.toggle('on', playing);
 }
+// 모바일: 컨트롤 패널 헤더 탭으로 열기/닫기
+document.querySelector('#ctrl .cp-head').addEventListener('click', () => {
+  if (window.innerWidth <= 700)
+    document.getElementById('ctrl').classList.toggle('mob-open');
+});
 function toggleLive() {
   live = !live;
   document.getElementById('btn-live').classList.toggle('on', live);
