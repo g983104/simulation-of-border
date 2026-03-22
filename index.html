@@ -709,10 +709,105 @@ function tGlowColor(tension, type) {
   return '#ff8c00';
 }
 
-// ── Flight overlay (OpenSky Network — 무료, Key 불필요) ──────────
+// ── Aircraft continent colours (conflict 표시와 혼동 방지: 빨강·주황 제외) ──
+const CONTINENT_COLORS = {
+  'EU': '#818CF8',  // 인디고   — Europe
+  'AS': '#F472B6',  // 핑크     — Asia
+  'NA': '#38BDF8',  // 하늘색   — North America
+  'SA': '#A78BFA',  // 라벤더   — South America
+  'AF': '#FBBF24',  // 금색     — Africa
+  'OC': '#34D399',  // 민트     — Oceania
+  'XX': '#94A3B8',  // 회색     — Other
+};
+const _EU = new Set(['Germany','France','United Kingdom','Spain','Italy','Netherlands',
+  'Switzerland','Sweden','Norway','Denmark','Finland','Austria','Belgium','Portugal',
+  'Poland','Czech Republic','Hungary','Romania','Greece','Turkey','Ireland','Croatia',
+  'Slovakia','Slovenia','Bulgaria','Serbia','Russia','Ukraine','Belarus','Georgia',
+  'Armenia','Azerbaijan','Estonia','Latvia','Lithuania','Luxembourg','Malta','Cyprus',
+  'Iceland','Albania','Bosnia and Herzegovina','North Macedonia','Montenegro','Moldova']);
+const _AS = new Set(['China','Japan','South Korea','India','Singapore','Thailand',
+  'Malaysia','Indonesia','Philippines','Vietnam','Taiwan','Hong Kong',
+  'United Arab Emirates','Saudi Arabia','Qatar','Kuwait','Bahrain','Oman',
+  'Israel','Jordan','Lebanon','Iraq','Iran','Pakistan','Bangladesh','Sri Lanka',
+  'Nepal','Kazakhstan','Uzbekistan','Myanmar','Cambodia','Mongolia','Kyrgyzstan',
+  'Tajikistan','Turkmenistan','Afghanistan','Laos','Brunei','Maldives','Bhutan']);
+const _NA = new Set(['United States','Canada','Mexico','Cuba','Jamaica',
+  'Dominican Republic','Guatemala','Honduras','El Salvador','Nicaragua',
+  'Costa Rica','Panama','Haiti','Puerto Rico','Trinidad and Tobago']);
+const _SA = new Set(['Brazil','Argentina','Chile','Colombia','Peru','Venezuela',
+  'Ecuador','Bolivia','Uruguay','Paraguay','Guyana','Suriname']);
+const _AF = new Set(['South Africa','Nigeria','Kenya','Ethiopia','Egypt','Morocco',
+  'Algeria','Tunisia','Libya','Ghana','Tanzania','Uganda','Cameroon','Ivory Coast',
+  'Senegal','Zimbabwe','Mozambique','Angola','Namibia','Botswana','Zambia','Rwanda',
+  'Democratic Republic of the Congo','Sudan','Somalia','Madagascar','Malawi',
+  'Burkina Faso','Niger','Mali','Chad','Eritrea','Benin','Togo','Sierra Leone',
+  'Liberia','Mauritania','Mauritius','Djibouti','Comoros','Cape Verde']);
+const _OC = new Set(['Australia','New Zealand','Papua New Guinea','Fiji',
+  'Solomon Islands','Vanuatu','Samoa','Tonga','Kiribati','Micronesia','Palau','Nauru']);
+function getContinent(country) {
+  if (_EU.has(country)) return 'EU';
+  if (_AS.has(country)) return 'AS';
+  if (_NA.has(country)) return 'NA';
+  if (_SA.has(country)) return 'SA';
+  if (_AF.has(country)) return 'AF';
+  if (_OC.has(country)) return 'OC';
+  return 'XX';
+}
+
+// ── Military aircraft detection ───────────────────────────────────
+// ICAO hex 주소 범위 (국가별 군용기 할당 블록)
+const MIL_ICAO_RANGES = [
+  [0xAE0000,0xAFFFFF], // USA (USAF/USN/USMC/USCG)
+  [0x43C000,0x43CFFF], // United Kingdom (RAF/RN/Army Air)
+  [0x347000,0x347FFF], // Germany (Luftwaffe)
+  [0x396000,0x3963FF], // France (Armée de l'Air)
+  [0x468000,0x4683FF], // Italy (AMI)
+  [0x484000,0x4843FF], // Netherlands (RNLAF)
+  [0x7CF400,0x7CFBFF], // Australia (RAAF/RAN)
+  [0x710000,0x717FFF], // Japan (JASDF/JMSDF/JGSDF)
+  [0x800000,0x83FFFF], // India (IAF/IN)
+  [0x01D000,0x01D3FF], // Russia (partial)
+  [0x780000,0x7BFFFF], // China (PLAAF/PLAN)
+  [0x738000,0x73FFFF], // South Korea (ROKAF)
+  [0x497C00,0x497FFF], // Norway (RNoAF)
+  [0x45E000,0x45EFFF], // Belgium (BAF)
+  [0x4B7000,0x4B7FFF], // Spain (Ejército del Aire)
+  [0x4CA000,0x4CAFFF], // Sweden (SwAF)
+  [0x461000,0x4613FF], // Denmark (RDAF)
+  [0x4C3000,0x4C3FFF], // Poland (PLAF)
+];
+// 콜사인 접두어 (군용기 전용 접두어)
+const MIL_CALLSIGN_PREFIX = [
+  'RCH','REACH','JAKE','BOXER','KNIFE','HOOK','HUNT','ZEUS','BRUT','SPAR',
+  'ROCKY','CASEY','PEARL','SWIFT','RIFLE','LANCE','COBRA','RAVEN','VIPER',
+  'DISCO','MONGO','TOPSY','TIGER','GHOST','SHADOW','FURY','WRATH',
+  'GAF',    // Luftwaffe
+  'CTM',    // Armée de l'Air transport
+  'NATO',   // NATO AWACS
+  'ASCOT',  // RAF transport
+  'TARTAN', // RAF
+  'DUKE',   // RAF
+  'NIGHT',  // various
+  'JOLLY',  // US HH-60
+  'PEDRO',  // US rescue
+];
+function isMilitary(icao24, callsign) {
+  if (icao24) {
+    const h = parseInt(icao24, 16);
+    if (!isNaN(h)) for (const [lo,hi] of MIL_ICAO_RANGES) if (h>=lo&&h<=hi) return true;
+  }
+  if (callsign) {
+    const cs = callsign.toUpperCase();
+    for (const p of MIL_CALLSIGN_PREFIX) if (cs.startsWith(p)) return true;
+  }
+  return false;
+}
+
+// ── Flight overlay (OpenSky Network — OAuth2) ────────────────────
 let aircraftData    = [];
 let showFlights     = false;
 let fetchingFlights = false;
+
 
 // ── Draw loop ─────────────────────────────────────────────────────
 let animT  = 0;
@@ -944,53 +1039,104 @@ function draw(now) {
 
   // ── Aircraft overlay ──────────────────────────────────────────
   if (showFlights && aircraftData.length > 0) {
-    const fproj   = getProjection();
-    const cx0 = rotX * Math.PI / 180;   // visible face center lng
-    const cy0 = rotY * Math.PI / 180;   // visible face center lat
+    // D3 fproj()는 뒷면 점에도 null을 반환하지 않으므로
+    // depth(구면 깊이)를 직접 계산해 뒷면 클리핑 + 지평선 페이드 처리
+    const fproj  = getProjection();
+    const rad    = R * zoom;
+    const rY_rad = rotY * Math.PI / 180;
+    const rX_rad = rotX * Math.PI / 180;
+    const cosRY  = Math.cos(rY_rad), sinRY = Math.sin(rY_rad);
     ctx.save();
     for (const ac of aircraftData) {
       if (ac.lat == null || ac.lon == null) continue;
-      const phi = ac.lat * Math.PI / 180;
-      const lam = ac.lon * Math.PI / 180;
-      // 후면(지구 뒷면) 점 제거
-      const vis = Math.sin(phi)*Math.sin(cy0) + Math.cos(phi)*Math.cos(cy0)*Math.cos(lam - cx0);
-      if (vis < 0.05) continue;
+
+      // 구면 깊이 계산: 1=정면 중앙, 0=지평선, 음수=뒷면
+      const phi_r  = ac.lat * Math.PI / 180;
+      const dLam_r = (ac.lon - rotX) * Math.PI / 180;
+      const depth  = Math.sin(phi_r)*sinRY + Math.cos(phi_r)*cosRY*Math.cos(dLam_r);
+      if (depth <= 0) continue;                   // 뒷면 → 스킵
+
+      // 지평선 근처(depth 0~0.08, 약 5°) 부드럽게 페이드
+      const edgeFade = Math.min(1, depth / 0.08);
+
+      // D3 projection으로 화면 좌표 계산
       const pt = fproj([ac.lon, ac.lat]);
       if (!pt) continue;
       const [ax, ay] = pt;
-      // 고도 높을수록 밝게 (순항고도 ~10000m = 최대)
-      const bright = ac.alt ? Math.min(1, ac.alt / 12000) : 0.5;
-      const col = `rgba(0,${Math.round(180 + 75*bright)},255,1)`;
-      const r   = 1.5;
-      // 코어 닷
-      ctx.globalAlpha = 0.6 + 0.35 * bright;
-      ctx.shadowBlur  = 4;
-      ctx.shadowColor = col;
-      ctx.fillStyle   = col;
-      ctx.beginPath();
-      ctx.arc(ax, ay, r, 0, Math.PI * 2);
-      ctx.fill();
-      // 헤딩 라인 (대원 방향)
-      if (ac.track != null) {
-        const trackR = ac.track * Math.PI / 180;
-        const sd     = 0.5 * Math.PI / 180;   // ~55km 방향 스텝
-        const lat2   = Math.asin(Math.sin(phi)*Math.cos(sd) + Math.cos(phi)*Math.sin(sd)*Math.cos(trackR));
-        const lng2   = ac.lon * Math.PI/180 + Math.atan2(
-          Math.sin(trackR)*Math.sin(sd)*Math.cos(phi),
-          Math.cos(sd) - Math.sin(phi)*Math.sin(lat2)
-        );
-        const pt2 = fproj([lng2 * 180/Math.PI, lat2 * 180/Math.PI]);
-        if (pt2) {
-          ctx.strokeStyle = col;
-          ctx.lineWidth   = 0.8;
-          ctx.globalAlpha = 0.45;
-          ctx.shadowBlur  = 0;
-          ctx.beginPath();
-          ctx.moveTo(ax, ay);
-          ctx.lineTo(pt2[0], pt2[1]);
-          ctx.stroke();
+
+      const isMil     = isMilitary(ac.icao24, ac.callsign);
+      const col       = isMil ? '#FFFFFF' : (CONTINENT_COLORS[getContinent(ac.country)] ?? CONTINENT_COLORS.XX);
+      const sz        = isMil ? 6.5 : 4.5;
+      const baseAlpha = (isMil ? 0.92 : 0.75) * edgeFade;
+
+      // ── 군용기: 레이더 링 펄스 ──────────────────────────
+      if (isMil) {
+        const pulse  = 0.5 + 0.5 * Math.sin(animT * 3.5 + ax * 0.01);
+        const ringR  = sz * 2.8 + pulse * sz * 1.2;
+        ctx.save();
+        ctx.globalAlpha = 0.55 * pulse * edgeFade;
+        ctx.strokeStyle = '#FF4040';
+        ctx.lineWidth   = 1.0;
+        ctx.shadowBlur  = 8;
+        ctx.shadowColor = '#FF2020';
+        ctx.beginPath();
+        ctx.arc(ax, ay, ringR, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 0.25 * pulse * edgeFade;
+        ctx.beginPath();
+        ctx.arc(ax, ay, ringR * 1.6, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+        // 콜사인 레이블
+        if (ac.callsign) {
+          ctx.save();
+          ctx.globalAlpha = 0.70 * edgeFade;
+          ctx.fillStyle   = '#FF6060';
+          ctx.font        = '7px "Courier New",monospace';
+          ctx.textAlign   = 'center';
+          ctx.fillText(ac.callsign, ax, ay - sz * 2.2);
+          ctx.restore();
         }
       }
+
+      // ── 비행기 실루엣 (진행 방향으로 회전) ──────────────
+      const heading = ac.track ?? 0;
+      ctx.save();
+      ctx.translate(ax, ay);
+      ctx.rotate((heading - 90) * Math.PI / 180);
+      ctx.globalAlpha = baseAlpha;
+      ctx.fillStyle   = col;
+      ctx.shadowBlur  = isMil ? 12 : 5;
+      ctx.shadowColor = isMil ? '#FF8080' : col;
+
+      // 동체
+      ctx.beginPath();
+      ctx.moveTo(0,          -sz);
+      ctx.lineTo( sz * 0.28,  sz * 0.30);
+      ctx.lineTo(0,           sz * 0.65);
+      ctx.lineTo(-sz * 0.28,  sz * 0.30);
+      ctx.closePath();
+      ctx.fill();
+
+      // 주익
+      ctx.beginPath();
+      ctx.moveTo(-sz * 1.4,  sz * 0.05);
+      ctx.lineTo( sz * 1.4,  sz * 0.05);
+      ctx.lineTo( sz * 0.30, sz * 0.45);
+      ctx.lineTo(-sz * 0.30, sz * 0.45);
+      ctx.closePath();
+      ctx.fill();
+
+      // 수평 미익
+      ctx.beginPath();
+      ctx.moveTo(-sz * 0.60, sz * 0.55);
+      ctx.lineTo( sz * 0.60, sz * 0.55);
+      ctx.lineTo( sz * 0.22, sz * 0.75);
+      ctx.lineTo(-sz * 0.22, sz * 0.75);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
     }
     ctx.restore();
   }
@@ -1449,20 +1595,28 @@ setInterval(() => {
   }
 }, 30 * 1000);
 
-// ── Flight fetch & toggle (OpenSky Network) ───────────────────────
+// ── Flight fetch & toggle (OpenSky Network — OAuth2) ─────────────
 async function fetchFlights() {
   if (fetchingFlights) return;
   fetchingFlights = true;
   document.getElementById('s-flights').textContent = '...';
   try {
-    // OpenSky Network — 전 세계 항공기, Key 불필요
-    // states 배열: [icao24, callsign, country, t_pos, t_contact, lon, lat, alt_baro, on_ground, speed, heading, ...]
+    // states: [icao24, callsign, country, t_pos, t_contact, lon, lat, alt_baro, on_ground, speed, heading, ...]
     const res = await fetch('https://opensky-network.org/api/states/all');
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     aircraftData = (data.states || [])
       .filter(s => s[5] != null && s[6] != null && s[8] === false) // 비행 중만
-      .map(s => ({ lon: s[5], lat: s[6], track: s[10], callsign: (s[1]||'').trim(), alt: s[7] }));
+      .map(s => ({ lon: s[5], lat: s[6], track: s[10], callsign: (s[1]||'').trim(), country: s[2]||'', icao24: (s[0]||'') }));
+    // 대륙별 색상 콘솔 출력
+    console.log('%c✈ AIR TRAFFIC — 대륙별 색상 구분', 'font-size:13px;font-weight:bold;color:#38BDF8');
+    console.log('%c  EU  Europe         ' + CONTINENT_COLORS.EU,  'color:' + CONTINENT_COLORS.EU);
+    console.log('%c  AS  Asia           ' + CONTINENT_COLORS.AS,  'color:' + CONTINENT_COLORS.AS);
+    console.log('%c  NA  North America  ' + CONTINENT_COLORS.NA,  'color:' + CONTINENT_COLORS.NA);
+    console.log('%c  SA  South America  ' + CONTINENT_COLORS.SA,  'color:' + CONTINENT_COLORS.SA);
+    console.log('%c  AF  Africa         ' + CONTINENT_COLORS.AF,  'color:' + CONTINENT_COLORS.AF);
+    console.log('%c  OC  Oceania        ' + CONTINENT_COLORS.OC,  'color:' + CONTINENT_COLORS.OC);
+    console.log('%c  XX  Other/Unknown  ' + CONTINENT_COLORS.XX,  'color:' + CONTINENT_COLORS.XX);
   } catch(e) {
     console.warn('OpenSky fetch error', e);
     aircraftData = [];
