@@ -665,10 +665,18 @@ function draw(now) {
   // ── Country borders ───────────────────────────────────────────
   if (worldBorders) {
     ctx.save();
-    ctx.shadowBlur  = 3;
-    ctx.shadowColor = '#ff6600';
-    ctx.strokeStyle = 'rgba(255,140,0,0.35)';
-    ctx.lineWidth   = 0.6;
+    ctx.shadowBlur  = 8;
+    ctx.shadowColor = '#ff7700';
+    ctx.strokeStyle = 'rgba(255,165,50,0.80)';
+    ctx.lineWidth   = 1.0;
+    ctx.beginPath();
+    gpath(worldBorders);
+    ctx.stroke();
+    // 두 번째 패스: 글로우 하이라이트
+    ctx.shadowBlur  = 16;
+    ctx.shadowColor = '#ffaa00';
+    ctx.strokeStyle = 'rgba(255,210,90,0.30)';
+    ctx.lineWidth   = 0.5;
     ctx.beginPath();
     gpath(worldBorders);
     ctx.stroke();
