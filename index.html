@@ -1066,76 +1066,29 @@ function draw(now) {
 
       const isMil     = isMilitary(ac.icao24, ac.callsign);
       const col       = isMil ? '#FFFFFF' : (CONTINENT_COLORS[getContinent(ac.country)] ?? CONTINENT_COLORS.XX);
-      const sz        = isMil ? 6.5 : 4.5;
+      const sz        = isMil ? 3.5 : 2.0;
       const baseAlpha = (isMil ? 0.92 : 0.75) * edgeFade;
 
-      // ── 군용기: 레이더 링 펄스 ──────────────────────────
-      if (isMil) {
-        const pulse  = 0.5 + 0.5 * Math.sin(animT * 3.5 + ax * 0.01);
-        const ringR  = sz * 2.8 + pulse * sz * 1.2;
+      // ── 군용기: 콜사인 레이블 ────────────────────────────
+      if (isMil && ac.callsign) {
         ctx.save();
-        ctx.globalAlpha = 0.55 * pulse * edgeFade;
-        ctx.strokeStyle = '#FF4040';
-        ctx.lineWidth   = 1.0;
-        ctx.shadowBlur  = 8;
-        ctx.shadowColor = '#FF2020';
-        ctx.beginPath();
-        ctx.arc(ax, ay, ringR, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.globalAlpha = 0.25 * pulse * edgeFade;
-        ctx.beginPath();
-        ctx.arc(ax, ay, ringR * 1.6, 0, Math.PI * 2);
-        ctx.stroke();
+        ctx.globalAlpha = 0.70 * edgeFade;
+        ctx.fillStyle   = '#FF6060';
+        ctx.font        = '7px "Courier New",monospace';
+        ctx.textAlign   = 'center';
+        ctx.fillText(ac.callsign, ax, ay - sz * 3);
         ctx.restore();
-        // 콜사인 레이블
-        if (ac.callsign) {
-          ctx.save();
-          ctx.globalAlpha = 0.70 * edgeFade;
-          ctx.fillStyle   = '#FF6060';
-          ctx.font        = '7px "Courier New",monospace';
-          ctx.textAlign   = 'center';
-          ctx.fillText(ac.callsign, ax, ay - sz * 2.2);
-          ctx.restore();
-        }
       }
 
-      // ── 비행기 실루엣 (진행 방향으로 회전) ──────────────
-      const heading = ac.track ?? 0;
+      // ── 점 표시 ──────────────────────────────────────────
       ctx.save();
-      ctx.translate(ax, ay);
-      ctx.rotate((heading - 90) * Math.PI / 180);
       ctx.globalAlpha = baseAlpha;
       ctx.fillStyle   = col;
-      ctx.shadowBlur  = isMil ? 12 : 5;
+      ctx.shadowBlur  = isMil ? 12 : 6;
       ctx.shadowColor = isMil ? '#FF8080' : col;
-
-      // 동체
       ctx.beginPath();
-      ctx.moveTo(0,          -sz);
-      ctx.lineTo( sz * 0.28,  sz * 0.30);
-      ctx.lineTo(0,           sz * 0.65);
-      ctx.lineTo(-sz * 0.28,  sz * 0.30);
-      ctx.closePath();
+      ctx.arc(ax, ay, sz, 0, Math.PI * 2);
       ctx.fill();
-
-      // 주익
-      ctx.beginPath();
-      ctx.moveTo(-sz * 1.4,  sz * 0.05);
-      ctx.lineTo( sz * 1.4,  sz * 0.05);
-      ctx.lineTo( sz * 0.30, sz * 0.45);
-      ctx.lineTo(-sz * 0.30, sz * 0.45);
-      ctx.closePath();
-      ctx.fill();
-
-      // 수평 미익
-      ctx.beginPath();
-      ctx.moveTo(-sz * 0.60, sz * 0.55);
-      ctx.lineTo( sz * 0.60, sz * 0.55);
-      ctx.lineTo( sz * 0.22, sz * 0.75);
-      ctx.lineTo(-sz * 0.22, sz * 0.75);
-      ctx.closePath();
-      ctx.fill();
-
       ctx.restore();
     }
     ctx.restore();
