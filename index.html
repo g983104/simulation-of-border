@@ -1053,12 +1053,14 @@ function draw(now) {
 
       // 구면 깊이 계산: 1=정면 중앙, 0=지평선, 음수=뒷면
       const phi_r  = ac.lat * Math.PI / 180;
-      const dLam_r = (ac.lon - rotX) * Math.PI / 180;
+      // d3.geoOrthographic.rotate([rotX,-rotY]) → 카메라 방향 lon=-rotX
+      // depth 공식: sin(lat)*sin(rotY) + cos(lat)*cos(rotY)*cos(lon + rotX)
+      const dLam_r = (ac.lon + rotX) * Math.PI / 180;
       const depth  = Math.sin(phi_r)*sinRY + Math.cos(phi_r)*cosRY*Math.cos(dLam_r);
       if (depth <= 0) continue;                   // 뒷면 → 스킵
 
-      // 지평선 근처(depth 0~0.08, 약 5°) 부드럽게 페이드
-      const edgeFade = Math.min(1, depth / 0.08);
+      // 지평선 근처(depth 0~0.06, 약 3.5°) 부드럽게 페이드
+      const edgeFade = Math.min(1, depth / 0.06);
 
       // D3 projection으로 화면 좌표 계산
       const pt = fproj([ac.lon, ac.lat]);
@@ -1068,13 +1070,13 @@ function draw(now) {
       const isMil     = isMilitary(ac.icao24, ac.callsign);
       const col       = isMil ? '#FFFFFF' : (CONTINENT_COLORS[getContinent(ac.country)] ?? CONTINENT_COLORS.XX);
       const sz        = isMil ? 2.0 : 1.2;
-      const baseAlpha = (isMil ? 0.92 : 0.75) * edgeFade;
+      const baseAlpha = (isMil ? 0.65 : 0.42) * edgeFade;
 
       // ── 점 표시 ──────────────────────────────────────────
       ctx.save();
       ctx.globalAlpha = baseAlpha;
       ctx.fillStyle   = col;
-      ctx.shadowBlur  = isMil ? 12 : 6;
+      ctx.shadowBlur  = isMil ? 5 : 2;
       ctx.shadowColor = isMil ? '#FF8080' : col;
       ctx.beginPath();
       ctx.arc(ax, ay, sz, 0, Math.PI * 2);
@@ -1113,7 +1115,7 @@ function draw(now) {
     ];
     const lh = 15, pad = 8;
     const bw = 102, bh = entries.length * lh + pad * 2;
-    const lx = W - bw - 12, ly = 14;
+    const lx = W - bw - 12, ly = 56;
     ctx.save();
     ctx.fillStyle   = 'rgba(0,0,0,0.58)';
     ctx.strokeStyle = 'rgba(0,200,255,0.18)';
