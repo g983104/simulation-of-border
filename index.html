@@ -600,9 +600,10 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
       const zone = zoneMap[pair.id];
       if (!zone) return;
       try {
+        const s0 = String(pair.ids[0]).padStart(3,'0');
+        const s1 = String(pair.ids[1]).padStart(3,'0');
         const mesh = topojson.mesh(world, world.objects.countries, (a, b) =>
-          (a.id === pair.ids[0] && b.id === pair.ids[1]) ||
-          (a.id === pair.ids[1] && b.id === pair.ids[0])
+          (a.id === s0 && b.id === s1) || (a.id === s1 && b.id === s0)
         );
         if (mesh && mesh.coordinates && mesh.coordinates.length > 0)
           conflictBorders.push({ mesh, zone });
