@@ -928,6 +928,7 @@ function updateLabelPositions(proj, cx, cy, rad) {
 }
 
 // ── Mouse / Touch interaction ──────────────────────────────────────
+// ── Mouse drag ────────────────────────────────────────────────────
 canvas.addEventListener('mousedown', e => {
   isDragging = true;
   lastMX = e.clientX; lastMY = e.clientY;
@@ -946,6 +947,74 @@ canvas.addEventListener('wheel', e => {
   e.preventDefault();
   zoom *= e.deltaY < 0 ? 1.10 : 0.91;
   zoom  = Math.max(0.4, Math.min(12, zoom));
+}, { passive: false });
+
+// ── Touch drag & pinch-zoom ────────────────────────────────────────
+let lastTouchX = 0, lastTouchY = 0, lastPinchDist = null;
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  isDragging = true;
+  if (e.touches.length === 1) {
+    lastTouchX = e.touches[0].clientX;
+    lastTouchY = e.touches[0].clientY;
+    lastPinchDist = null;
+  } else if (e.touches.length === 2) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    lastPinchDist = Math.hypot(dx, dy);
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (e.touches.length === 1 && lastPinchDist === null) {
+    const dx = e.touches[0].clientX - lastTouchX;
+    const dy = e.touches[0].clientY - lastTouchY;
+    rotX += dx * 0.4;
+    rotY += dy * 0.4;
+    rotY  = Math.max(-85, Math.min(85, rotY));
+    lastTouchX = e.touches[0].clientX;
+    lastTouchY = e.touches[0].clientY;
+  } else if (e.touches.length === 2) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    const dist = Math.hypot(dx, dy);
+    if (lastPinchDist !== null) {
+      zoom *= dist / lastPinchDist;
+      zoom  = Math.max(0.4, Math.min(12, zoom));
+    }
+    lastPinchDist = dist;
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  if (e.touches.length === 0) {
+    // 탭(짧은 터치) → 구역 선택
+    if (isDragging) {
+      const touch = e.changedTouches[0];
+      const proj = getProjection();
+      const cx = W/2, cy = H/2, rad = R*zoom;
+      const hitR = Math.max(18, 40 / Math.max(1, zoom)); // 모바일은 hit 영역 더 크게
+      let best = null, bestD = hitR * hitR;
+      ZONES.forEach(z => {
+        const pt = proj([z.lng, z.lat]);
+        if (!pt) return;
+        const [px, py] = pt;
+        const d2 = (px-cx)**2 + (py-cy)**2;
+        if (d2 > rad*rad*0.95) return;
+        const d = (touch.clientX-px)**2 + (touch.clientY-py)**2;
+        if (d < bestD) { bestD=d; best=z; }
+      });
+      if (best) showInfo(best);
+    }
+    isDragging = false;
+    lastPinchDist = null;
+  } else if (e.touches.length === 1) {
+    lastPinchDist = null;
+    lastTouchX = e.touches[0].clientX;
+    lastTouchY = e.touches[0].clientY;
+  }
 }, { passive: false });
 
 // Click to select zone — hit radius shrinks as zoom increases so dense areas are selectable
