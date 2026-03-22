@@ -970,14 +970,15 @@ function draw(now) {
     // ── 국경선 강조: d3.geoCircle (지구본 곡면에 그려지는 경계 링) ──
     const baseDeg = { war:5.5, conflict:4.5, closed:4.0, restricted:3.5, contested:3.8, open:2.5 }[z.type] || 3.5;
     const animDeg = baseDeg * (1 + (isWar ? 0.10 : 0.05) * Math.sin(animT * (isWar ? 4 : 2) + i));
+    const fb = showFlights ? 1.6 : 1.0;  // flight mode boost
     try {
       const geoRing = d3.geoCircle().center([z.lng, z.lat]).radius(animDeg)();
       ctx.save();
-      ctx.shadowBlur  = (isWar ? 22 : 12) * z.tension;
+      ctx.shadowBlur  = (isWar ? 22 : 12) * z.tension * fb;
       ctx.shadowColor = gcol;
       ctx.strokeStyle = col;
-      ctx.globalAlpha = (isWar ? 0.88 : 0.55) * tPulse;
-      ctx.lineWidth   = isWar ? 1.8 : (isHot ? 1.2 : 0.7);
+      ctx.globalAlpha = Math.min(1, (isWar ? 0.88 : 0.55) * tPulse * fb);
+      ctx.lineWidth   = (isWar ? 1.8 : (isHot ? 1.2 : 0.7)) * (showFlights ? 1.5 : 1.0);
       if (!isWar && !isHot) ctx.setLineDash([3, 4]);
       ctx.beginPath();
       gpath(geoRing);
@@ -992,11 +993,11 @@ function draw(now) {
       try {
         const geoOuter = d3.geoCircle().center([z.lng, z.lat]).radius(outerDeg)();
         ctx.save();
-        ctx.shadowBlur  = 12 * z.tension;
+        ctx.shadowBlur  = 12 * z.tension * fb;
         ctx.shadowColor = gcol;
         ctx.strokeStyle = col;
-        ctx.globalAlpha = 0.22 * pulse;
-        ctx.lineWidth   = 0.6;
+        ctx.globalAlpha = Math.min(1, 0.22 * pulse * fb);
+        ctx.lineWidth   = 0.6 * (showFlights ? 1.5 : 1.0);
         ctx.setLineDash([2, 6]);
         ctx.beginPath();
         gpath(geoOuter);
@@ -1096,6 +1097,43 @@ function draw(now) {
     ctx.globalCompositeOperation = 'screen';
     ctx.fillStyle = `rgba(${Math.random()>0.5?255:0},0,0,0.05)`;
     ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
+
+  // ── 항공기 대륙 색상 범례 ─────────────────────────────────────
+  if (showFlights) {
+    const entries = [
+      ['Europe',      CONTINENT_COLORS.EU],
+      ['Asia',        CONTINENT_COLORS.AS],
+      ['N. America',  CONTINENT_COLORS.NA],
+      ['S. America',  CONTINENT_COLORS.SA],
+      ['Africa',      CONTINENT_COLORS.AF],
+      ['Oceania',     CONTINENT_COLORS.OC],
+      ['Military',    '#FFFFFF'],
+    ];
+    const lh = 15, pad = 8;
+    const bw = 102, bh = entries.length * lh + pad * 2;
+    const lx = W - bw - 12, ly = 14;
+    ctx.save();
+    ctx.fillStyle   = 'rgba(0,0,0,0.58)';
+    ctx.strokeStyle = 'rgba(0,200,255,0.18)';
+    ctx.lineWidth   = 0.7;
+    ctx.fillRect(lx, ly, bw, bh);
+    ctx.strokeRect(lx, ly, bw, bh);
+    ctx.font      = '8px "Courier New",monospace';
+    ctx.textAlign = 'left';
+    entries.forEach(([name, color], i) => {
+      const dy = ly + pad + i * lh + 6;
+      ctx.beginPath();
+      ctx.arc(lx + pad + 3, dy, 3, 0, Math.PI * 2);
+      ctx.fillStyle   = color;
+      ctx.shadowBlur  = 5;
+      ctx.shadowColor = color;
+      ctx.fill();
+      ctx.shadowBlur  = 0;
+      ctx.fillStyle   = 'rgba(255,255,255,0.72)';
+      ctx.fillText(name, lx + pad + 11, dy + 3.5);
+    });
     ctx.restore();
   }
 
