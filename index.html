@@ -185,6 +185,9 @@ body{
     <button class="cbtn play on" id="btn-play" onclick="togglePlay()">PLAY</button>
     <button class="cbtn live on" id="btn-live" onclick="toggleLive()">LIVE</button>
   </div>
+  <div class="btn-row">
+    <button class="cbtn" id="btn-reset" onclick="resetView()" style="color:#aaa;border-color:#aaa;width:100%;letter-spacing:3px;">⟳ RESET VIEW</button>
+  </div>
   <div class="divider"></div>
   <div class="drow">
     <span class="dlabel">CONFLICT</span>
@@ -683,15 +686,9 @@ function draw(now) {
 
   // ── Tension zones ─────────────────────────────────────────────
   ZONES.forEach((z, i) => {
-    const pt  = proj([z.lng, z.lat]);
+    const pt = proj([z.lng, z.lat]);
     if (!pt) return;
     const [px, py] = pt;
-
-    // Visibility check (is the point on the front hemisphere?)
-    const rotation = proj.rotate();
-    const dx = z.lng - (-rotation[0]);
-    const dy = z.lat - (-rotation[1]);
-    // Crude check: if projected pt is within globe circle
     const dist2 = (px - cx) ** 2 + (py - cy) ** 2;
     if (dist2 > rad * rad * 0.98) return;
 
@@ -702,88 +699,72 @@ function draw(now) {
     const tPulse = Math.sin(animT * 3.5 * z.tension + i) * .2 + .8;
     const isHot  = z.tension > .78 && z.type !== 'open';
 
-    // Z-axis pillar (긴장 = 높이)
-    if (z.type !== 'open' && z.tension > .2) {
-      const pillarH = z.tension * (rad * (isWar ? 0.32 : 0.22));
-      const nx = (px - cx) / rad, ny = (py - cy) / rad;
-      const tipX = px + nx * pillarH * .75;
-      const tipY = py + ny * pillarH * .75;
-
-      const pillarGrad = ctx.createLinearGradient(px, py, tipX, tipY);
-      pillarGrad.addColorStop(0,   gcol + 'cc');
-      pillarGrad.addColorStop(0.5, gcol + '77');
-      pillarGrad.addColorStop(1,   gcol + '00');
-
+    // ── 국경선 강조: d3.geoCircle (지구본 곡면에 그려지는 경계 링) ──
+    const baseDeg = { war:5.5, conflict:4.5, closed:4.0, restricted:3.5, contested:3.8, open:2.5 }[z.type] || 3.5;
+    const animDeg = baseDeg * (1 + (isWar ? 0.10 : 0.05) * Math.sin(animT * (isWar ? 4 : 2) + i));
+    try {
+      const geoRing = d3.geoCircle().center([z.lng, z.lat]).radius(animDeg)();
       ctx.save();
-      ctx.shadowBlur  = (isWar ? 18 : 8) * z.tension;
-      ctx.shadowColor = gcol;
-      ctx.strokeStyle = pillarGrad;
-      ctx.lineWidth   = isWar ? 2.5 + z.tension*3 : 1.5 + z.tension*2;
-      ctx.lineCap     = 'round';
-      ctx.globalAlpha = (isWar ? 0.9 : 0.7) * tPulse;
-      ctx.beginPath();
-      ctx.moveTo(px, py);
-      ctx.lineTo(tipX, tipY);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    // 전쟁 지역 특수 효과: 십자형 폭발 패턴
-    if (isWar) {
-      const sz = 5 + z.tension * 10;
-      const wa = 0.3 + 0.4 * pulse;
-      ctx.save();
-      ctx.shadowBlur  = 25;
+      ctx.shadowBlur  = (isWar ? 22 : 12) * z.tension;
       ctx.shadowColor = gcol;
       ctx.strokeStyle = col;
-      ctx.lineWidth   = 1.2;
-      ctx.globalAlpha = wa;
-      // 십자 +
+      ctx.globalAlpha = (isWar ? 0.88 : 0.55) * tPulse;
+      ctx.lineWidth   = isWar ? 1.8 : (isHot ? 1.2 : 0.7);
+      if (!isWar && !isHot) ctx.setLineDash([3, 4]);
+      ctx.beginPath();
+      gpath(geoRing);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    } catch(e) {}
+
+    // ── 핫존 외곽 희미한 두 번째 링 ─────────────────────────────
+    if (isHot) {
+      const outerDeg = baseDeg * (1.7 + 0.12 * Math.sin(animT * 1.5 + i));
+      try {
+        const geoOuter = d3.geoCircle().center([z.lng, z.lat]).radius(outerDeg)();
+        ctx.save();
+        ctx.shadowBlur  = 12 * z.tension;
+        ctx.shadowColor = gcol;
+        ctx.strokeStyle = col;
+        ctx.globalAlpha = 0.22 * pulse;
+        ctx.lineWidth   = 0.6;
+        ctx.setLineDash([2, 6]);
+        ctx.beginPath();
+        gpath(geoOuter);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      } catch(e) {}
+    }
+
+    // ── 전쟁 지역 십자 마크 (소형) ───────────────────────────────
+    if (isWar) {
+      const sz = 3 + z.tension * 5;
+      ctx.save();
+      ctx.shadowBlur  = 14;
+      ctx.shadowColor = gcol;
+      ctx.strokeStyle = col;
+      ctx.lineWidth   = 0.9;
+      ctx.globalAlpha = 0.6 * pulse;
       [-1,1].forEach(sx => [-1,1].forEach(sy => {
         ctx.beginPath();
         ctx.moveTo(px + sx * sz * 0.3, py + sy * sz * 0.3);
         ctx.lineTo(px + sx * sz, py + sy * sz);
         ctx.stroke();
       }));
-      // 방사형 X
-      ctx.globalAlpha = wa * 0.5;
-      [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy]) => {
-        ctx.beginPath();
-        ctx.moveTo(px, py);
-        ctx.lineTo(px + dx * sz * 1.4, py + dy * sz * 1.4);
-        ctx.stroke();
-      });
       ctx.restore();
     }
 
-    // 분쟁·전쟁 지역 외부 펄싱 링
-    if (isHot) {
-      const rings = isWar ? [1.5, 2.5, 3.8] : [1.8, 3.0];
-      rings.forEach((mult, ri) => {
-        const ringR = (isWar ? 6 : 4) + z.tension * (isWar ? 14 : 12) * mult;
-        const ringA = ri === 0 ? 0.3*(1-pulse*.3) : ri===1 ? 0.15*pulse : 0.07*tPulse;
-        ctx.save();
-        ctx.shadowBlur  = isWar ? 20 : 12;
-        ctx.shadowColor = gcol;
-        ctx.strokeStyle = col;
-        ctx.globalAlpha = ringA;
-        ctx.lineWidth   = isWar ? 1.2 : 0.8;
-        ctx.beginPath();
-        ctx.arc(px, py, ringR * (1 + 0.18 * pulse), 0, Math.PI*2);
-        ctx.stroke();
-        ctx.restore();
-      });
-    }
-
-    // 코어 글로우 닷
-    const dotR = z.type === 'open' ? 3 : isWar ? 5+z.tension*9 : 3+z.tension*7;
+    // ── 코어 닷 (작은 점) ────────────────────────────────────────
+    const dotR = z.type === 'open' ? 1.5 : isWar ? 2.5 : 2.0;
     ctx.save();
-    ctx.shadowBlur  = (isWar ? 30 : 18) * z.tension;
+    ctx.shadowBlur  = (isWar ? 16 : 8) * z.tension;
     ctx.shadowColor = gcol;
     ctx.fillStyle   = col;
-    ctx.globalAlpha = (isWar ? 0.85 : 0.6) * tPulse;
+    ctx.globalAlpha = (isWar ? 1.0 : 0.85) * tPulse;
     ctx.beginPath();
-    ctx.arc(px, py, dotR * (1 + 0.18*pulse), 0, Math.PI*2);
+    ctx.arc(px, py, dotR, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   });
@@ -1170,6 +1151,21 @@ function togglePlay() {
 function toggleLive() {
   live = !live;
   document.getElementById('btn-live').classList.toggle('on', live);
+}
+function resetView() {
+  const x0 = rotX, y0 = rotY, z0 = zoom;
+  const xT = 20,   yT = 0,    zT = 1.0;
+  const dur = 900, t0 = performance.now();
+  const ease = t => t < .5 ? 2*t*t : -1+(4-2*t)*t;
+  (function step(now) {
+    const p = Math.min(1, (now - t0) / dur);
+    const e = ease(p);
+    const dLng = ((xT - x0) % 360 + 540) % 360 - 180;
+    rotX = x0 + dLng * e;
+    rotY = y0 + (yT - y0) * e;
+    zoom = z0 + (zT - z0) * e;
+    if (p < 1) requestAnimationFrame(step);
+  })(t0);
 }
 
 // ── Glitch ────────────────────────────────────────────────────────
