@@ -810,9 +810,9 @@ const labelEls = [];
 
 function updateLabelPositions(proj, cx, cy, rad) {
   // 줌 비례 폰트 크기: 기본 7px, 확대 시 최대 18px
-  const fs = Math.max(6, Math.min(18, 7 * zoom));
-  const lsp = Math.max(1, Math.min(4, 2 * zoom));
-  const offsetY = Math.max(10, 14 * zoom);
+  const fs = Math.max(6, Math.min(22, 7 * zoom));
+  const lsp = Math.max(1, Math.min(5, 2 * zoom));
+  const offsetY = Math.max(10, Math.min(32, 14 * zoom));
 
   labelEls.forEach(({ z, el }) => {
     const pt = proj([z.lng, z.lat]);
@@ -847,16 +847,17 @@ window.addEventListener('mousemove', e => {
 });
 canvas.addEventListener('wheel', e => {
   e.preventDefault();
-  zoom *= e.deltaY < 0 ? 1.08 : 0.93;
-  zoom  = Math.max(0.4, Math.min(5, zoom));
+  zoom *= e.deltaY < 0 ? 1.10 : 0.91;
+  zoom  = Math.max(0.4, Math.min(12, zoom));
 }, { passive: false });
 
-// Click to select zone
+// Click to select zone — hit radius shrinks as zoom increases so dense areas are selectable
 canvas.addEventListener('click', e => {
   if (isDragging) return;
   const proj = getProjection();
   const cx = W/2, cy = H/2, rad = R*zoom;
-  let best = null, bestD = 22*22;
+  const hitR = Math.max(9, 28 / Math.max(1, zoom));
+  let best = null, bestD = hitR * hitR;
   ZONES.forEach(z => {
     const pt = proj([z.lng, z.lat]);
     if (!pt) return;
