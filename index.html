@@ -1066,19 +1066,8 @@ function draw(now) {
 
       const isMil     = isMilitary(ac.icao24, ac.callsign);
       const col       = isMil ? '#FFFFFF' : (CONTINENT_COLORS[getContinent(ac.country)] ?? CONTINENT_COLORS.XX);
-      const sz        = isMil ? 3.5 : 2.0;
+      const sz        = isMil ? 2.0 : 1.2;
       const baseAlpha = (isMil ? 0.92 : 0.75) * edgeFade;
-
-      // ── 군용기: 콜사인 레이블 ────────────────────────────
-      if (isMil && ac.callsign) {
-        ctx.save();
-        ctx.globalAlpha = 0.70 * edgeFade;
-        ctx.fillStyle   = '#FF6060';
-        ctx.font        = '7px "Courier New",monospace';
-        ctx.textAlign   = 'center';
-        ctx.fillText(ac.callsign, ax, ay - sz * 3);
-        ctx.restore();
-      }
 
       // ── 점 표시 ──────────────────────────────────────────
       ctx.save();
