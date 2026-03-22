@@ -914,6 +914,7 @@ function updateLabelPositions(proj, cx, cy, rad) {
     const [px, py] = pt;
     const d2 = (px - cx) ** 2 + (py - cy) ** 2;
     if (d2 > rad * rad * 0.95) { el.style.display = 'none'; return; }
+    if (z.type !== 'war') { el.style.display = 'none'; return; }
     el.style.display      = 'block';
     el.style.left         = px + 'px';
     el.style.top          = (py - offsetY) + 'px';
