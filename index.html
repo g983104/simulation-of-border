@@ -228,7 +228,7 @@ body{
   <div class="st">GLOBAL TENSION <span id="s-tension">—</span></div>
   <div class="st" id="st-news" style="color:#555;font-size:6px;margin-top:4px">LIVE NEWS <span id="s-news-status" style="color:#444">대기 중...</span></div>
   <div class="st" style="margin-top:2px;color:#444">LAST SYNC <span id="s-time" style="color:#555">—</span></div>
-  <div class="st" style="color:#ff6633;margin-top:6px">MIL AIRCRAFT <span id="s-flights" style="color:#ff4400">—</span></div>
+  <div class="st" style="color:#00aacc;margin-top:6px">AIR TRAFFIC <span id="s-flights" style="color:#00ddff">—</span></div>
 </div>
 
 <!-- Search -->
@@ -255,7 +255,7 @@ body{
     <button class="cbtn" id="btn-reset" onclick="resetView()" style="color:#aaa;border-color:#aaa;width:100%;letter-spacing:3px;">⟳ RESET VIEW</button>
   </div>
   <div class="btn-row">
-    <button class="cbtn" id="btn-flights" onclick="toggleFlights()" style="color:#ff6633;border-color:#ff6633;width:100%;letter-spacing:2px;">✈ MIL AIRCRAFT</button>
+    <button class="cbtn" id="btn-flights" onclick="toggleFlights()" style="color:#00aacc;border-color:#00aacc;width:100%;letter-spacing:2px;">✈ AIR TRAFFIC</button>
   </div>
   <div class="divider"></div>
   <div class="drow">
@@ -709,10 +709,7 @@ function tGlowColor(tension, type) {
   return '#ff8c00';
 }
 
-// ── Military flight overlay ───────────────────────────────────────
-// RapidAPI Key 발급: https://rapidapi.com/adsbx/api/adsbexchange-com1
-// 사용 엔드포인트: Tagged Military Aircraft (전 세계 군용기 1회 호출)
-const FLIGHT_API_KEY = 'YOUR_RAPIDAPI_KEY';  // ← 여기에 Key 입력
+// ── Flight overlay (OpenSky Network — 무료, Key 불필요) ──────────
 let aircraftData    = [];
 let showFlights     = false;
 let fetchingFlights = false;
@@ -961,11 +958,13 @@ function draw(now) {
       const pt = fproj([ac.lon, ac.lat]);
       if (!pt) continue;
       const [ax, ay] = pt;
-      const col = '#ff3333';
-      const r   = 2.5;
+      // 고도 높을수록 밝게 (순항고도 ~10000m = 최대)
+      const bright = ac.alt ? Math.min(1, ac.alt / 12000) : 0.5;
+      const col = `rgba(0,${Math.round(180 + 75*bright)},255,1)`;
+      const r   = 1.5;
       // 코어 닷
-      ctx.globalAlpha = 0.95;
-      ctx.shadowBlur  = 10;
+      ctx.globalAlpha = 0.6 + 0.35 * bright;
+      ctx.shadowBlur  = 4;
       ctx.shadowColor = col;
       ctx.fillStyle   = col;
       ctx.beginPath();
@@ -1450,28 +1449,22 @@ setInterval(() => {
   }
 }, 30 * 1000);
 
-// ── Military flight fetch & toggle ───────────────────────────────
+// ── Flight fetch & toggle (OpenSky Network) ───────────────────────
 async function fetchFlights() {
   if (fetchingFlights) return;
-  if (!FLIGHT_API_KEY || FLIGHT_API_KEY === 'YOUR_RAPIDAPI_KEY') {
-    document.getElementById('s-flights').textContent = 'KEY 필요';
-    return;
-  }
   fetchingFlights = true;
   document.getElementById('s-flights').textContent = '...';
   try {
-    // Tagged Military Aircraft — 전 세계 군용기 단 1회 호출
-    const res = await fetch('https://adsbexchange-com1.p.rapidapi.com/v2/mil/', {
-      headers: {
-        'X-RapidAPI-Key': FLIGHT_API_KEY,
-        'X-RapidAPI-Host': 'adsbexchange-com1.p.rapidapi.com'
-      }
-    });
+    // OpenSky Network — 전 세계 항공기, Key 불필요
+    // states 배열: [icao24, callsign, country, t_pos, t_contact, lon, lat, alt_baro, on_ground, speed, heading, ...]
+    const res = await fetch('https://opensky-network.org/api/states/all');
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    aircraftData = (data.ac || []).filter(a => a.lat != null && a.lon != null);
+    aircraftData = (data.states || [])
+      .filter(s => s[5] != null && s[6] != null && s[8] === false) // 비행 중만
+      .map(s => ({ lon: s[5], lat: s[6], track: s[10], callsign: (s[1]||'').trim(), alt: s[7] }));
   } catch(e) {
-    console.warn('military flight fetch error', e);
+    console.warn('OpenSky fetch error', e);
     aircraftData = [];
   }
   fetchingFlights = false;
@@ -1481,8 +1474,8 @@ async function fetchFlights() {
 function toggleFlights() {
   showFlights = !showFlights;
   document.getElementById('btn-flights').classList.toggle('on', showFlights);
-  document.getElementById('btn-flights').style.color      = showFlights ? '#ff2200' : '#ff6633';
-  document.getElementById('btn-flights').style.borderColor= showFlights ? '#ff2200' : '#ff6633';
+  document.getElementById('btn-flights').style.color      = showFlights ? '#00ffff' : '#00aacc';
+  document.getElementById('btn-flights').style.borderColor= showFlights ? '#00ffff' : '#00aacc';
   if (showFlights && aircraftData.length === 0) fetchFlights();
 }
 
