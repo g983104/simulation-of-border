@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>경계의 시뮬레이션 | SIMULATION OF BORDER</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  background:#000008;
+  overflow:hidden;
+  font-family:'Courier New',Courier,monospace;
+  color:#ff8c00;
+  user-select:none;
+}
+
+#c{display:block;position:fixed;top:0;left:0;z-index:1;}
+
+/* ── Scanlines ── */
+#scanlines{
+  position:fixed;inset:0;pointer-events:none;z-index:90;
+  background:repeating-linear-gradient(
+    0deg,transparent,transparent 3px,
+    rgba(0,0,0,.05) 3px,rgba(0,0,0,.05) 4px
+  );
+}
+
+/* ── Title ── */
+#title{
+  position:fixed;top:22px;left:22px;z-index:50;pointer-events:none;
+}
+.t-ko{
+  font-size:18px;font-weight:700;letter-spacing:5px;
+  color:#ff8c00;
+  text-shadow:0 0 8px #ff8c00,0 0 20px #ff6600,0 0 50px #ff3300;
+}
+.t-en{font-size:8px;letter-spacing:10px;color:#ff6600;opacity:.7;margin-top:5px;}
+.t-sub{font-size:7px;letter-spacing:4px;color:#883300;opacity:.5;margin-top:3px;}
+
+/* ── Stats ── */
+#stats{
+  position:fixed;top:88px;left:22px;z-index:50;pointer-events:none;
+}
+.st{font-size:7px;letter-spacing:2px;color:#883300;margin:4px 0;}
+.st span{color:#ff8c00;}
+
+/* ── Search ── */
+#search{position:fixed;top:22px;right:22px;z-index:50;}
+#search-input{
+  background:rgba(3,1,0,.85);border:1px solid #ff5500;
+  color:#ff8c00;padding:6px 12px;
+  font-family:'Courier New',monospace;font-size:8px;letter-spacing:2px;
+  width:180px;outline:none;
+}
+#search-input::placeholder{color:#663300;opacity:.6;}
+#search-input:focus{box-shadow:0 0 12px rgba(255,140,0,.25);}
+
+/* ── Control Panel ── */
+#ctrl{
+  position:fixed;bottom:36px;left:22px;z-index:50;
+  background:rgba(3,1,0,.92);
+  border:1px solid rgba(255,100,0,.6);
+  padding:14px;width:220px;
+  box-shadow:0 0 30px rgba(255,140,0,.08),inset 0 0 15px rgba(255,140,0,.03);
+}
+.cp-head{font-size:7px;letter-spacing:4px;color:#ff6600;opacity:.6;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid rgba(255,140,0,.15);}
+.btn-row{display:flex;gap:5px;margin-bottom:7px;flex-wrap:wrap;}
+.cbtn{font-family:'Courier New',monospace;font-size:7px;letter-spacing:2px;padding:5px 9px;border:1px solid currentColor;background:transparent;cursor:pointer;transition:all .2s;}
+.cbtn.nation{color:#cc44ff;border-color:#cc44ff;}
+.cbtn.inframe{color:#ff8c00;border-color:#ff8c00;}
+.cbtn.play{color:#ff8c00;border-color:#ff8c00;}
+.cbtn.live{color:#00ff88;border-color:#00ff88;}
+.cbtn.on{filter:brightness(2);background:rgba(255,255,255,.08);box-shadow:0 0 8px currentColor;}
+.cbtn:hover{box-shadow:0 0 10px currentColor;filter:brightness(1.5);}
+.divider{height:1px;background:rgba(255,140,0,.12);margin:10px 0;}
+.drow{display:flex;align-items:center;margin:5px 0;gap:6px;font-size:7px;}
+.dlabel{color:#883300;letter-spacing:1px;min-width:52px;}
+.dbar-wrap{flex:1;height:3px;background:#1a0500;overflow:hidden;}
+.dbar{height:100%;background:linear-gradient(to right,#00ff88,#ff8c00,#ff0000);transition:width .6s ease;}
+.dval{color:#ff8c00;letter-spacing:1px;min-width:28px;text-align:right;}
+.legend{margin-top:8px;}
+.lrow{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:7px;letter-spacing:1px;}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* ── Info Panel ── */
+#info{
+  position:fixed;top:50%;right:22px;transform:translateY(-50%);
+  z-index:50;background:rgba(3,1,0,.92);
+  border:1px solid rgba(255,100,0,.5);
+  padding:16px;width:240px;
+  opacity:0;transition:opacity .3s ease;pointer-events:none;
+}
+#info.show{opacity:1;pointer-events:auto;}
+.iname{font-size:11px;letter-spacing:3px;color:#ff8c00;margin-bottom:4px;}
+.iname-en{font-size:8px;letter-spacing:4px;color:#cc4400;margin-bottom:12px;opacity:.7;}
+.idesc{font-size:8px;letter-spacing:1px;line-height:1.6;color:#cc6600;margin-bottom:12px;opacity:.8;}
+.imeta{font-size:7px;letter-spacing:2px;margin:5px 0;display:flex;justify-content:space-between;}
+.imeta span:first-child{color:#663300;}
+.imeta span:last-child{color:#ff8c00;}
+.itbar{width:100%;height:4px;background:#1a0500;margin:8px 0 12px;}
+.itfill{height:100%;transition:width .5s ease;}
+#close-info{position:absolute;top:8px;right:8px;background:transparent;border:1px solid #663300;color:#cc4400;font-size:8px;padding:3px 7px;font-family:'Courier New',monospace;cursor:pointer;}
+.news-item{margin-bottom:7px;}
+.news-source{font-size:6px;letter-spacing:2px;color:#ff6600;opacity:.7;}
+.news-time{font-size:6px;letter-spacing:1px;color:#553300;float:right;}
+.news-title{font-size:7px;letter-spacing:1px;line-height:1.5;color:#cc6600;margin-top:2px;opacity:.9;}
+
+/* ── Labels overlay ── */
+#labels{position:fixed;inset:0;pointer-events:none;z-index:40;}
+.zone-label{
+  position:absolute;font-size:7px;letter-spacing:2px;
+  color:#ff8c00;opacity:.8;white-space:nowrap;
+  transform:translate(-50%,-50%);
+  text-shadow:0 0 6px #ff4400;pointer-events:none;
+  transition:opacity .3s;
+}
+.zone-label.war{color:#ffffff;text-shadow:0 0 10px #ff0000,0 0 4px #fff;animation:warFlash .8s infinite;}
+.zone-label.conflict{color:#ff2020;text-shadow:0 0 8px #ff0000;}
+.zone-label.open{color:#00ff88;text-shadow:0 0 6px #00ff88;}
+@keyframes warFlash{0%,100%{opacity:.9}50%{opacity:.5}}
+
+/* ── News Ticker ── */
+#ticker{
+  position:fixed;bottom:0;left:0;right:0;z-index:50;
+  background:rgba(3,1,0,.95);border-top:1px solid rgba(255,140,0,.2);
+  height:26px;display:flex;align-items:center;overflow:hidden;
+}
+.tick-tag{position:absolute;left:0;height:100%;background:#ff8c00;color:#000;font-size:7px;font-weight:700;letter-spacing:3px;padding:0 12px;display:flex;align-items:center;white-space:nowrap;z-index:1;}
+.tick-inner{padding-left:80px;overflow:hidden;flex:1;height:100%;display:flex;align-items:center;}
+.tick-text{white-space:nowrap;font-size:7px;letter-spacing:2px;color:#cc5500;display:inline-block;animation:tickscroll 90s linear infinite;}
+@keyframes tickscroll{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
+
+/* ── Buttons ── */
+#save-btn{position:fixed;bottom:62px;right:22px;z-index:50;background:transparent;border:1px solid #553300;color:#ff8c00;padding:8px 14px;font-family:'Courier New',monospace;font-size:7px;letter-spacing:3px;cursor:pointer;transition:all .2s;}
+#save-btn:hover{background:rgba(255,140,0,.08);box-shadow:0 0 12px rgba(255,140,0,.2);}
+#glitch-btn{position:fixed;bottom:36px;right:22px;z-index:50;background:transparent;border:1px solid #330033;color:#9933cc;padding:8px 14px;font-family:'Courier New',monospace;font-size:7px;letter-spacing:3px;cursor:pointer;transition:all .2s;}
+#glitch-btn:hover{background:rgba(153,51,204,.08);box-shadow:0 0 12px rgba(153,51,204,.3);}
+</style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+<div id="scanlines"></div>
+
+<!-- Title -->
+<div id="title">
+  <div class="t-ko">경계의 시뮬레이션</div>
+  <div class="t-en">SIMULATION OF BORDER</div>
+  <div class="t-sub">TACTICAL BORDER ROUTE CONTROL — 황유택 × THE STRANGER</div>
+</div>
+
+<!-- Stats -->
+<div id="stats">
+  <div class="st" style="color:#ff2020;animation:warFlash .8s infinite">WAR ZONES <span id="s-war" style="color:#ff2020">—</span></div>
+  <div class="st">ACTIVE CONFLICTS <span id="s-conflict">—</span></div>
+  <div class="st">CLOSED BORDERS <span id="s-closed">—</span></div>
+  <div class="st">OPEN ZONES <span id="s-open">—</span></div>
+  <div class="st">GLOBAL TENSION <span id="s-tension">—</span></div>
+  <div class="st" id="st-news" style="color:#555;font-size:6px;margin-top:4px">LIVE NEWS <span id="s-news-status" style="color:#444">대기 중...</span></div>
+  <div class="st" style="margin-top:2px;color:#444">LAST SYNC <span id="s-time" style="color:#555">—</span></div>
+</div>
+
+<!-- Search -->
+<div id="search">
+  <input id="search-input" type="text" placeholder="국경 검색 / SEARCH BORDER..." />
+</div>
+
+<!-- Zone Labels -->
+<div id="labels"></div>
+
+<!-- Control Panel -->
+<div id="ctrl">
+  <div class="cp-head">BORDER OPERATIONS CONTROL</div>
+  <div class="btn-row">
+    <button class="cbtn nation on" id="btn-nation" onclick="toggleBtn('nation')">NATION</button>
+    <button class="cbtn inframe" id="btn-time" onclick="toggleBtn('time')">TIME</button>
+  </div>
+  <div class="btn-row">
+    <button class="cbtn inframe on" id="btn-inframe" onclick="toggleBtn('inframe')">INFRAME</button>
+    <button class="cbtn play on" id="btn-play" onclick="togglePlay()">PLAY</button>
+    <button class="cbtn live on" id="btn-live" onclick="toggleLive()">LIVE</button>
+  </div>
+  <div class="divider"></div>
+  <div class="drow">
+    <span class="dlabel">CONFLICT</span>
+    <div class="dbar-wrap"><div class="dbar" id="db-conflict" style="width:92%"></div></div>
+    <span class="dval" id="dv-conflict">0.92</span>
+  </div>
+  <div class="drow">
+    <span class="dlabel">RESTRICT</span>
+    <div class="dbar-wrap"><div class="dbar" id="db-restrict" style="width:72%"></div></div>
+    <span class="dval" id="dv-restrict">0.72</span>
+  </div>
+  <div class="drow">
+    <span class="dlabel">OPEN</span>
+    <div class="dbar-wrap"><div class="dbar" id="db-open" style="width:8%"></div></div>
+    <span class="dval" id="dv-open">0.08</span>
+  </div>
+  <div class="divider"></div>
+  <div class="legend">
+    <div class="lrow"><div class="dot" style="background:#fff;box-shadow:0 0 8px #f00;animation:warFlash .8s infinite"></div><span style="color:#ff2020;animation:warFlash .8s infinite">전면전 / ACTIVE WAR</span></div>
+    <div class="lrow"><div class="dot" style="background:#ff1010;box-shadow:0 0 6px #f00"></div><span style="color:#883333">봉쇄·분쟁 / CONFLICT</span></div>
+    <div class="lrow"><div class="dot" style="background:#ff8c00;box-shadow:0 0 6px #f80"></div><span style="color:#886633">제한 / RESTRICTED</span></div>
+    <div class="lrow"><div class="dot" style="background:#ffcc00;box-shadow:0 0 6px #fc0"></div><span style="color:#886633">영토분쟁 / CONTESTED</span></div>
+    <div class="lrow"><div class="dot" style="background:#00ff88;box-shadow:0 0 6px #0f4"></div><span style="color:#338844">자유 통과 / OPEN</span></div>
+  </div>
+</div>
+
+<!-- Info Panel -->
+<div id="info">
+  <button id="close-info" onclick="hideInfo()">✕</button>
+  <div class="iname" id="i-name">—</div>
+  <div class="iname-en" id="i-en">—</div>
+  <div class="idesc" id="i-desc">—</div>
+  <div class="itbar"><div class="itfill" id="i-tbar" style="width:0%"></div></div>
+  <div class="imeta"><span>TENSION INDEX</span><span id="i-tval">—</span></div>
+  <div class="imeta"><span>STATUS</span><span id="i-status">—</span></div>
+  <div class="imeta"><span>COORDINATES</span><span id="i-coords">—</span></div>
+  <div class="imeta"><span>UPDATED</span><span id="i-time">—</span></div>
+  <div id="i-news-wrap" style="display:none;margin-top:10px;border-top:1px solid rgba(255,140,0,.15);padding-top:8px;">
+    <div style="font-size:6px;letter-spacing:3px;color:#663300;margin-bottom:6px;">LIVE REPORTS</div>
+    <div id="i-news-list"></div>
+  </div>
+</div>
+
+<!-- News Ticker -->
+<div id="ticker">
+  <div class="tick-tag">LIVE FEED</div>
+  <div class="tick-inner">
+    <div class="tick-text" id="tick-text">
+      ▸ 한국-북한 DMZ 총격 사건 / GUNFIRE AT KOREA DMZ ▸
+      가자지구 민간인 대피 명령 / CIVILIAN EVACUATION ORDER IN GAZA ▸
+      러시아-우크라이나 전선 이동 감지 / FRONTLINE SHIFT DETECTED ▸
+      EU 솅겐 국경 정상 운영 / EU SCHENGEN NORMAL OPERATIONS ▸
+      멕시코-미국 국경 장벽 공사 / MX-US BORDER WALL CONSTRUCTION ▸
+      대만 해협 중국 군사훈련 / CHINA MILITARY DRILLS IN TAIWAN STRAIT ▸
+      인도-파키스탄 LoC 발포 사건 / FIRING INCIDENT AT IND-PAK LoC ▸
+      수단 내전 피란민 100만 / SUDAN CONFLICT: 1M+ DISPLACED ▸
+      예멘 후티 미사일 공격 / HOUTHI MISSILE ATTACK REPORTED ▸
+    </div>
+  </div>
+</div>
+
+<button id="save-btn" onclick="saveFile()">⬇ SAVE FILE</button>
+<button id="glitch-btn" onclick="triggerGlitch()">⚡ GLITCH</button>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// 경계의 시뮬레이션 | SIMULATION OF BORDER
+// 황유택 × THE STRANGER — Canvas 2D + D3.js
+// ═══════════════════════════════════════════════════════════════
+
+// ── Border Data ─────────────────────────────────────────────────
+// type: 'war'=전면전, 'conflict'=분쟁, 'closed'=봉쇄, 'restricted'=제한, 'contested'=영토분쟁, 'open'=개방
+// tension: 0~1 (기준값, 실시간 뉴스로 조정됨)
+const ZONES = [
+  // ─ 한반도 ─
+  { id:'KR-KP', name:'한국-북한 DMZ',        en:'KOREA–N.KOREA DMZ',         lat:38.0,  lng:127.0,  tension:.92, type:'closed',     desc:'완전 봉쇄. 세계 최고 무장 248km 비무장지대. 2023년 포격 도발.',
+    keywords:['north korea','dprk','kim jong','dmz','38th parallel','korean'] },
+  { id:'KP-CN', name:'북한-중국 국경',        en:'N.KOREA–CHINA BORDER',      lat:42.0,  lng:128.5,  tension:.52, type:'restricted', desc:'1,416km 두만강·압록강. 코로나 이후 제한적 재개. 탈북 루트.',
+    keywords:['north korea china border','tumen','yalu'] },
+
+  // ─ 중동 ─
+  { id:'IL-PS', name:'가자지구',              en:'GAZA STRIP',                 lat:31.35, lng:34.4,   tension:.98, type:'war',        desc:'2023년 10월 이후 전면전. 220만 명 봉쇄. 인도주의 참사.',
+    keywords:['gaza','hamas','rafah','idf','ceasefire','palestinian','netanyahu','israel'] },
+  { id:'IL-WB', name:'이스라엘-서안지구',     en:'WEST BANK',                  lat:32.2,  lng:35.2,   tension:.88, type:'conflict',   desc:'정착촌 확대. 팔레스타인 자치구 긴장. 연일 교전.',
+    keywords:['west bank','jenin','ramallah','settler','occupation','jerusalem'] },
+  { id:'IL-LB', name:'이스라엘-레바논',       en:'ISRAEL–LEBANON',             lat:33.4,  lng:35.5,   tension:.86, type:'conflict',   desc:'헤즈볼라와의 휴전 불안정. 남부 레바논 교전 지속.',
+    keywords:['hezbollah','lebanon','beirut','southern lebanon'] },
+  { id:'SY',   name:'시리아 내전',            en:'SYRIA CONFLICT',             lat:34.8,  lng:38.5,   tension:.90, type:'war',        desc:'13년째 내전. ISIS 잔존. 다국적 개입. 350만 피란민.',
+    keywords:['syria','syrian','damascus','idlib','isis','aleppo','hts'] },
+  { id:'YE',   name:'예멘 내전',              en:'YEMEN WAR',                  lat:15.5,  lng:44.0,   tension:.88, type:'war',        desc:'후티 반군·사우디 연합군 전쟁. 홍해 공격. 세계 최악 인도주의 위기.',
+    keywords:['houthi','yemen','yemeni','red sea','sanaa'] },
+  { id:'IR-IL', name:'이란-이스라엘 긴장',    en:'IRAN–ISRAEL TENSION',        lat:31.0,  lng:48.0,   tension:.82, type:'contested',  desc:'드론·미사일 직접 공격 교환. 핵 프로그램 긴장.',
+    keywords:['iran','iranian','nuclear facility','tehran','irgc','persian'] },
+  { id:'IQ-KU', name:'이라크-쿠르디스탄',     en:'IRAQ–KURDISTAN',             lat:35.5,  lng:44.0,   tension:.68, type:'contested',  desc:'쿠르드 자치구 독립 분쟁. ISIS 잔존 세력 활동.',
+    keywords:['kurdistan','erbil','peshmerga','iraq kurd'] },
+
+  // ─ 유럽 ─
+  { id:'RU-UA', name:'러시아-우크라이나',      en:'RUSSIA–UKRAINE WAR',         lat:49.0,  lng:35.5,   tension:.97, type:'war',        desc:'2022년 2월 전면 침공. 유럽 최대 전쟁. 수십만 명 사망.',
+    keywords:['ukraine','russia','kharkiv','zaporizhzhia','kyiv','crimea','donbas','zelensky','putin'] },
+  { id:'BY-PL', name:'벨라루스-폴란드',        en:'BELARUS–POLAND BORDER',      lat:52.5,  lng:23.8,   tension:.78, type:'restricted', desc:'이주민 무기화 위기. 하이브리드 전쟁. EU 외부 국경 강화.',
+    keywords:['belarus poland','lukashenko migration','hybrid warfare'] },
+  { id:'RS-XK', name:'세르비아-코소보',        en:'SERBIA–KOSOVO',              lat:42.7,  lng:21.0,   tension:.75, type:'contested',  desc:'코소보 독립 국제 미승인. 2023년 북부 긴장 고조. NATO 개입.',
+    keywords:['kosovo','serbia','pristina','nato kosovo'] },
+  { id:'MD-RU', name:'트란스니스트리아',        en:'TRANSNISTRIA (MOLDOVA)',      lat:47.2,  lng:29.3,   tension:.65, type:'contested',  desc:'친러 분리주의. 러시아군 주둔. 우크라이나 전쟁 파급 우려.',
+    keywords:['transnistria','moldova','russian troops moldova'] },
+  { id:'GE-RU', name:'조지아-러시아',          en:'GEORGIA–RUSSIA',             lat:42.3,  lng:43.8,   tension:.80, type:'closed',     desc:'남오세티아·압하지야 러시아 점령. EU 가입 추진 중 긴장.',
+    keywords:['georgia russia','south ossetia','abkhazia'] },
+  { id:'AM-AZ', name:'아르메니아-아제르바이잔', en:'ARMENIA–AZERBAIJAN',          lat:40.0,  lng:46.0,   tension:.80, type:'conflict',   desc:'나고르노-카라바흐 2020·2023년 전쟁. 10만 아르메니아인 강제 이주.',
+    keywords:['armenia','azerbaijan','karabakh','nagorno','baku','yerevan'] },
+  { id:'CY',   name:'키프로스 분단선',         en:'CYPRUS GREEN LINE',          lat:35.15, lng:33.35,  tension:.50, type:'closed',     desc:'1974년 분단. 북·남 키프로스 그린라인. EU 내 유일한 분단국.',
+    keywords:['cyprus','nicosia green line'] },
+
+  // ─ 중앙아시아·코카서스 ─
+  { id:'AF-PK', name:'아프가니스탄-파키스탄',  en:'AFGHANISTAN–PAKISTAN',       lat:32.5,  lng:68.5,   tension:.88, type:'conflict',   desc:'탈레반 통치. 2,670km 듀란드선 분쟁. 테러 공격 일상화.',
+    keywords:['afghanistan','taliban','kabul','pakistan border','durand'] },
+  { id:'KY-TJ', name:'키르기스-타지키스탄',    en:'KYRGYZSTAN–TAJIKISTAN',      lat:39.8,  lng:70.8,   tension:.72, type:'conflict',   desc:'수자원·토지 분쟁. 2022년 무력 충돌로 수십 명 사망.',
+    keywords:['kyrgyzstan tajikistan','fergana','border clash central asia'] },
+
+  // ─ 남아시아 ─
+  { id:'IN-PK', name:'인도-파키스탄 LoC',      en:'INDIA–PAKISTAN LoC',         lat:33.2,  lng:74.5,   tension:.85, type:'closed',     desc:'통제선(LoC). 핵보유국 간 최대 화약고. 카슈미르 분쟁.',
+    keywords:['india pakistan','kashmir','loc line of control','islamabad delhi'] },
+  { id:'IN-CN', name:'인도-중국 국경',          en:'INDIA–CHINA LAC',            lat:33.5,  lng:79.5,   tension:.75, type:'contested',  desc:'히말라야 실질통제선(LAC). 갈완 계곡 충돌. 군비 경쟁.',
+    keywords:['india china border','galwan','himalaya clash','india china'] },
+  { id:'MM',   name:'미얀마 내전',              en:'MYANMAR CIVIL WAR',          lat:20.5,  lng:96.0,   tension:.90, type:'war',        desc:'2021년 쿠데타 후 내전. 민주저항군 vs 군부. 250만 피란민.',
+    keywords:['myanmar','burma','junta','resistance myanmar','tatmadaw'] },
+  { id:'MM-BD', name:'방글라데시 국경',         en:'MYANMAR–BANGLADESH BORDER',  lat:21.5,  lng:92.3,   tension:.80, type:'restricted', desc:'로힝야 난민 100만+. 캠프 포화. 귀환 불투명.',
+    keywords:['rohingya','cox bazar','bangladesh myanmar'] },
+
+  // ─ 동아시아 ─
+  { id:'CN-TW', name:'대만 해협',               en:'TAIWAN STRAIT',              lat:23.5,  lng:119.5,  tension:.82, type:'contested',  desc:'중국 영유권 주장. 연례 군사훈련. 미국 개입 위협.',
+    keywords:['taiwan','strait','pla','china military','taipei'] },
+  { id:'CN-SCS', name:'남중국해',               en:'SOUTH CHINA SEA',            lat:12.0,  lng:114.0,  tension:.78, type:'contested',  desc:'중국 인공섬 건설. 필리핀·베트남·말레이시아 영유권 분쟁.',
+    keywords:['south china sea','spratlys','philippines china','spratly'] },
+
+  // ─ 아프리카 ─
+  { id:'SU-SD', name:'수단 내전',               en:'SUDAN CIVIL WAR',            lat:15.5,  lng:32.0,   tension:.92, type:'war',        desc:'SAF vs RSF 전면전. 세계 최대 난민 위기. 기근 선포.',
+    keywords:['sudan','rsf','khartoum','darfur','sudanese civil war'] },
+  { id:'DRC',  name:'콩고 동부 분쟁',           en:'EASTERN DRC CONFLICT',       lat:-1.5,  lng:28.5,   tension:.88, type:'war',        desc:'M23 반군·르완다 개입. 30년째 분쟁. 수백만 피란민.',
+    keywords:['congo','drc','m23','kinshasa','eastern congo','rwanda troops'] },
+  { id:'ET-SS', name:'에티오피아-소말리아',      en:'ETHIOPIA–SOMALIA',           lat:5.0,   lng:42.0,   tension:.78, type:'conflict',   desc:'알-샤밥 테러. 에티오피아-소말리아 영유권 긴장.',
+    keywords:['ethiopia somalia','al-shabaab','mogadishu'] },
+  { id:'ML',   name:'말리-사헬 지역',           en:'MALI–SAHEL REGION',          lat:16.5,  lng:-2.0,   tension:.85, type:'war',        desc:'쿠데타 후 러시아 바그너 개입. 프랑스 철수. 지하디스트 확산.',
+    keywords:['mali','sahel','wagner africa','burkina','niger coup'] },
+  { id:'SS',   name:'남수단',                   en:'SOUTH SUDAN',                lat:6.5,   lng:31.0,   tension:.80, type:'conflict',   desc:'내전 재발 위기. 부족 갈등 지속. 인도주의 위기.',
+    keywords:['south sudan','juba','south sudan conflict'] },
+  { id:'LY',   name:'리비아 분쟁',              en:'LIBYA CONFLICT',             lat:27.0,  lng:17.0,   tension:.75, type:'conflict',   desc:'동서 분열 정부. 터키·UAE 군사 개입. 지중해 난민 루트.',
+    keywords:['libya','tripoli','benghazi','haftar'] },
+  { id:'ET-ER', name:'에티오피아-에리트레아',    en:'ETHIOPIA–ERITREA',           lat:14.5,  lng:38.5,   tension:.68, type:'closed',     desc:'2020년 티그라이 전쟁 후 불안정. 국경 통제 지속.',
+    keywords:['eritrea ethiopia','tigray','asmara'] },
+
+  // ─ 아메리카 ─
+  { id:'MX-US', name:'멕시코-미국 국경',         en:'MEXICO–USA BORDER',          lat:26.5,  lng:-105.0, tension:.72, type:'restricted', desc:'3,145km 장벽. 카르텔 활동. 역대 최다 이민 위기.',
+    keywords:['mexico border','us mexico wall','cartel','migration us','rio grande'] },
+  { id:'VE-GY', name:'베네수엘라-가이아나',       en:'VENEZUELA–GUYANA',           lat:6.5,   lng:-60.5,  tension:.74, type:'contested',  desc:'에세퀴보 영유권 분쟁. 2023년 국민투표 후 군사 긴장.',
+    keywords:['venezuela guyana','essequibo','maduro guyana'] },
+  { id:'VE-CO', name:'베네수엘라-콜롬비아',       en:'VENEZUELA–COLOMBIA',         lat:7.5,   lng:-72.0,  tension:.65, type:'restricted', desc:'경제난 이민 700만+. 게릴라·카르텔 월경 활동.',
+    keywords:['venezuela colombia','uchumachi','venezuelan migrants'] },
+
+  // ─ 개방 구역 ─
+  { id:'EU',   name:'EU 솅겐 구역',              en:'EU SCHENGEN ZONE',           lat:48.5,  lng:10.0,   tension:.08, type:'open',       desc:'26개국 자유 이동. 영국 제외(브렉시트 2020). 일부 국경 임시 재도입.',
+    keywords:['schengen','european union border','free movement'] },
+  { id:'MA-DZ', name:'모로코-알제리',             en:'MOROCCO–ALGERIA',            lat:32.0,  lng:-2.5,   tension:.60, type:'closed',     desc:'2021년 외교 단절. 국경 완전 봉쇄. 서사하라 영유권 갈등.',
+    keywords:['morocco algeria','maghreb border','western sahara'] },
+];
+
+// ── Canvas Setup ─────────────────────────────────────────────────
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+let W = window.innerWidth, H = window.innerHeight;
+canvas.width  = W;
+canvas.height = H;
+
+// ── Globe Projection ──────────────────────────────────────────────
+let R = Math.min(W, H) * 0.38;
+let rotX = 20, rotY = 0; // [longitude, latitude] rotation
+let isDragging = false, lastMX = 0, lastMY = 0;
+let zoom = 1.0;
+
+function getProjection() {
+  return d3.geoOrthographic()
+    .scale(R * zoom)
+    .translate([W / 2, H / 2])
+    .clipAngle(90)
+    .rotate([rotX, -rotY, 0]);
+}
+
+// ── Starfield (pre-generated) ─────────────────────────────────────
+const STARS = [];
+for (let i = 0; i < 3000; i++) {
+  STARS.push({
+    x: Math.random() * 3000 - 1500,
+    y: Math.random() * 3000 - 1500,
+    r: Math.random() * 1.2,
+    a: 0.15 + Math.random() * 0.7,
+    c: Math.random() > 0.85 ? '#aaddff' : '#ffffff'
+  });
+}
+
+// ── World data ────────────────────────────────────────────────────
+let worldBorders = null, worldLand = null;
+
+fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+  .then(r => r.json())
+  .then(world => {
+    worldBorders = topojson.mesh(world, world.objects.countries, (a,b) => a !== b);
+    worldLand    = topojson.feature(world, world.objects.land);
+  })
+  .catch(() => {
+    // Globe renders without border detail lines
+  });
+
+// ── Color helpers ────────────────────────────────────────────────
+function tColorStr(tension, type, t) {
+  if (type === 'open')       return '#00ff88';
+  if (type === 'war') {
+    // 전쟁 지역: 흰색-빨강 교차 깜빡임
+    const flash = Math.sin((t||0) * 6) > 0.3;
+    return flash ? '#ffffff' : '#ff0010';
+  }
+  if (tension >= .92)        return '#ff0010';
+  if (tension >= .82)        return '#ff3300';
+  if (tension >= .70)        return '#ff6600';
+  if (tension >= .55)        return '#ff8c00';
+  if (tension >= .35)        return '#ffaa00';
+  return '#ffcc00';
+}
+function tGlowColor(tension, type) {
+  if (type === 'open') return '#00ff88';
+  if (type === 'war')  return '#ff0010';
+  if (tension >= .82)  return '#ff2200';
+  if (tension >= .65)  return '#ff6600';
+  return '#ff8c00';
+}
+
+// ── Draw loop ─────────────────────────────────────────────────────
+let animT  = 0;
+let playing = true, live = true;
+let glitchFrames = 0;
+let updateTimer = 0, lastFrame = performance.now();
+
+function draw(now) {
+  requestAnimationFrame(draw);
+
+  const dt = Math.min((now - lastFrame) / 1000, 0.1);
+  lastFrame = now;
+  animT += dt;
+
+  // Auto-rotate
+  if (playing && !isDragging) rotX += 0.08;
+
+  // Live tension simulation (every 5s)
+  // 실제 뉴스로 조정되며, 여기선 타입별 현실적 기준 범위 내 변동
+  updateTimer += dt;
+  if (live && updateTimer > 5) {
+    updateTimer = 0;
+    ZONES.forEach(z => {
+      if (z.type === 'open') return;
+      const range = {
+        war:        [.88, .99],
+        conflict:   [.72, .97],
+        closed:     [.50, .92],
+        restricted: [.42, .80],
+        contested:  [.55, .88],
+      }[z.type] || [.10, .80];
+      const delta = (Math.random() - 0.45) * 0.028; // 약간 상승 바이어스
+      z.tension = Math.max(range[0], Math.min(range[1], z.tension + delta));
+    });
+    updateStats();
+  }
+
+  const proj  = getProjection();
+  const gpath = d3.geoPath().projection(proj).context(ctx);
+  const cx    = W / 2, cy = H / 2, rad = R * zoom;
+
+  // ── Clear ─────────────────────────────────────────────────────
+  ctx.fillStyle = '#000008';
+  ctx.fillRect(0, 0, W, H);
+
+  // ── Stars ─────────────────────────────────────────────────────
+  STARS.forEach(s => {
+    const sx = ((s.x + W / 2) % W + W) % W;
+    const sy = ((s.y + H / 2) % H + H) % H;
+    ctx.globalAlpha = s.a * (0.7 + 0.3 * Math.sin(animT * 0.5 + s.r * 10));
+    ctx.fillStyle   = s.c;
+    ctx.beginPath();
+    ctx.arc(sx, sy, s.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // ── Globe base (dark sphere) ──────────────────────────────────
+  const globeGrad = ctx.createRadialGradient(cx-rad*.15, cy-rad*.15, 0, cx, cy, rad);
+  globeGrad.addColorStop(0,   '#001033');
+  globeGrad.addColorStop(0.6, '#000820');
+  globeGrad.addColorStop(1,   '#000208');
+  ctx.beginPath();
+  gpath({type:'Sphere'});
+  ctx.fillStyle   = globeGrad;
+  ctx.fill();
+
+  // ── Atmosphere glow ───────────────────────────────────────────
+  const atmoGrad = ctx.createRadialGradient(cx, cy, rad*.88, cx, cy, rad*1.12);
+  atmoGrad.addColorStop(0,    'rgba(20,80,255,0)');
+  atmoGrad.addColorStop(0.5,  'rgba(20,80,255,0.04)');
+  atmoGrad.addColorStop(0.85, 'rgba(50,130,255,0.12)');
+  atmoGrad.addColorStop(1,    'rgba(0,0,80,0)');
+  ctx.beginPath();
+  ctx.arc(cx, cy, rad * 1.12, 0, Math.PI * 2);
+  ctx.fillStyle = atmoGrad;
+  ctx.fill();
+
+  // ── Graticule ─────────────────────────────────────────────────
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,140,0,0.06)';
+  ctx.lineWidth   = 0.5;
+  ctx.beginPath();
+  gpath(d3.geoGraticule()());
+  ctx.stroke();
+  ctx.restore();
+
+  // ── Country borders ───────────────────────────────────────────
+  if (worldBorders) {
+    ctx.save();
+    ctx.shadowBlur  = 3;
+    ctx.shadowColor = '#ff6600';
+    ctx.strokeStyle = 'rgba(255,140,0,0.35)';
+    ctx.lineWidth   = 0.6;
+    ctx.beginPath();
+    gpath(worldBorders);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── Globe outline ─────────────────────────────────────────────
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,140,0,0.15)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  gpath({type:'Sphere'});
+  ctx.stroke();
+  ctx.restore();
+
+  // ── Tension zones ─────────────────────────────────────────────
+  ZONES.forEach((z, i) => {
+    const pt  = proj([z.lng, z.lat]);
+    if (!pt) return;
+    const [px, py] = pt;
+
+    // Visibility check (is the point on the front hemisphere?)
+    const rotation = proj.rotate();
+    const dx = z.lng - (-rotation[0]);
+    const dy = z.lat - (-rotation[1]);
+    // Crude check: if projected pt is within globe circle
+    const dist2 = (px - cx) ** 2 + (py - cy) ** 2;
+    if (dist2 > rad * rad * 0.98) return;
+
+    const isWar  = z.type === 'war';
+    const col    = tColorStr(z.tension, z.type, animT);
+    const gcol   = tGlowColor(z.tension, z.type);
+    const pulse  = Math.sin(animT * (isWar ? 5 : 2.5) + i * 0.8) * .3 + .7;
+    const tPulse = Math.sin(animT * 3.5 * z.tension + i) * .2 + .8;
+    const isHot  = z.tension > .78 && z.type !== 'open';
+
+    // Z-axis pillar (긴장 = 높이)
+    if (z.type !== 'open' && z.tension > .2) {
+      const pillarH = z.tension * (rad * (isWar ? 0.32 : 0.22));
+      const nx = (px - cx) / rad, ny = (py - cy) / rad;
+      const tipX = px + nx * pillarH * .75;
+      const tipY = py + ny * pillarH * .75;
+
+      const pillarGrad = ctx.createLinearGradient(px, py, tipX, tipY);
+      pillarGrad.addColorStop(0,   gcol + 'cc');
+      pillarGrad.addColorStop(0.5, gcol + '77');
+      pillarGrad.addColorStop(1,   gcol + '00');
+
+      ctx.save();
+      ctx.shadowBlur  = (isWar ? 18 : 8) * z.tension;
+      ctx.shadowColor = gcol;
+      ctx.strokeStyle = pillarGrad;
+      ctx.lineWidth   = isWar ? 2.5 + z.tension*3 : 1.5 + z.tension*2;
+      ctx.lineCap     = 'round';
+      ctx.globalAlpha = (isWar ? 0.9 : 0.7) * tPulse;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(tipX, tipY);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 전쟁 지역 특수 효과: 십자형 폭발 패턴
+    if (isWar) {
+      const sz = 5 + z.tension * 10;
+      const wa = 0.3 + 0.4 * pulse;
+      ctx.save();
+      ctx.shadowBlur  = 25;
+      ctx.shadowColor = gcol;
+      ctx.strokeStyle = col;
+      ctx.lineWidth   = 1.2;
+      ctx.globalAlpha = wa;
+      // 십자 +
+      [-1,1].forEach(sx => [-1,1].forEach(sy => {
+        ctx.beginPath();
+        ctx.moveTo(px + sx * sz * 0.3, py + sy * sz * 0.3);
+        ctx.lineTo(px + sx * sz, py + sy * sz);
+        ctx.stroke();
+      }));
+      // 방사형 X
+      ctx.globalAlpha = wa * 0.5;
+      [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy]) => {
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(px + dx * sz * 1.4, py + dy * sz * 1.4);
+        ctx.stroke();
+      });
+      ctx.restore();
+    }
+
+    // 분쟁·전쟁 지역 외부 펄싱 링
+    if (isHot) {
+      const rings = isWar ? [1.5, 2.5, 3.8] : [1.8, 3.0];
+      rings.forEach((mult, ri) => {
+        const ringR = (isWar ? 6 : 4) + z.tension * (isWar ? 14 : 12) * mult;
+        const ringA = ri === 0 ? 0.3*(1-pulse*.3) : ri===1 ? 0.15*pulse : 0.07*tPulse;
+        ctx.save();
+        ctx.shadowBlur  = isWar ? 20 : 12;
+        ctx.shadowColor = gcol;
+        ctx.strokeStyle = col;
+        ctx.globalAlpha = ringA;
+        ctx.lineWidth   = isWar ? 1.2 : 0.8;
+        ctx.beginPath();
+        ctx.arc(px, py, ringR * (1 + 0.18 * pulse), 0, Math.PI*2);
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+
+    // 코어 글로우 닷
+    const dotR = z.type === 'open' ? 3 : isWar ? 5+z.tension*9 : 3+z.tension*7;
+    ctx.save();
+    ctx.shadowBlur  = (isWar ? 30 : 18) * z.tension;
+    ctx.shadowColor = gcol;
+    ctx.fillStyle   = col;
+    ctx.globalAlpha = (isWar ? 0.85 : 0.6) * tPulse;
+    ctx.beginPath();
+    ctx.arc(px, py, dotR * (1 + 0.18*pulse), 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // ── Glitch effect ─────────────────────────────────────────────
+  if (glitchFrames > 0) {
+    glitchFrames--;
+    const sliceH = 5 + Math.random() * 20;
+    const sliceY = Math.random() * H;
+    const shift  = (Math.random() - 0.5) * 30;
+    ctx.save();
+    ctx.globalAlpha = 0.6;
+    ctx.drawImage(canvas, 0, sliceY, W, sliceH, shift, sliceY, W, sliceH);
+    // Color aberration
+    ctx.globalCompositeOperation = 'screen';
+    ctx.fillStyle = `rgba(${Math.random()>0.5?255:0},0,0,0.05)`;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
+
+  // ── Update label positions ────────────────────────────────────
+  updateLabelPositions(proj, cx, cy, rad);
+}
+
+// ── Labels ────────────────────────────────────────────────────────
+const labelEls = [];
+(function buildLabels() {
+  const container = document.getElementById('labels');
+  ZONES.forEach(z => {
+    const el = document.createElement('div');
+    el.className = 'zone-label'
+      + (z.type==='war' ? ' war' : '')
+      + (z.type==='conflict'||z.tension>.9 ? ' conflict' : '')
+      + (z.type==='open' ? ' open' : '');
+    el.textContent = z.en;
+    el.dataset.id  = z.id;
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', () => showInfo(z));
+    container.appendChild(el);
+    labelEls.push({ z, el });
+  });
+})();
+
+function updateLabelPositions(proj, cx, cy, rad) {
+  // 줌 비례 폰트 크기: 기본 7px, 확대 시 최대 18px
+  const fs = Math.max(6, Math.min(18, 7 * zoom));
+  const lsp = Math.max(1, Math.min(4, 2 * zoom));
+  const offsetY = Math.max(10, 14 * zoom);
+
+  labelEls.forEach(({ z, el }) => {
+    const pt = proj([z.lng, z.lat]);
+    if (!pt) { el.style.display = 'none'; return; }
+    const [px, py] = pt;
+    const d2 = (px - cx) ** 2 + (py - cy) ** 2;
+    if (d2 > rad * rad * 0.95) { el.style.display = 'none'; return; }
+    el.style.display      = 'block';
+    el.style.left         = px + 'px';
+    el.style.top          = (py - offsetY) + 'px';
+    el.style.fontSize     = fs + 'px';
+    el.style.letterSpacing = lsp + 'px';
+    const fade = Math.max(0, Math.min(1, 1 - d2 / (rad * rad)));
+    el.style.opacity = (fade * 0.85).toFixed(2);
+  });
+}
+
+// ── Mouse / Touch interaction ──────────────────────────────────────
+canvas.addEventListener('mousedown', e => {
+  isDragging = true;
+  lastMX = e.clientX; lastMY = e.clientY;
+});
+window.addEventListener('mouseup', () => isDragging = false);
+window.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  const dx = e.clientX - lastMX;
+  const dy = e.clientY - lastMY;
+  rotX += dx * 0.3;
+  rotY += dy * 0.3;
+  rotY  = Math.max(-85, Math.min(85, rotY));
+  lastMX = e.clientX; lastMY = e.clientY;
+});
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  zoom *= e.deltaY < 0 ? 1.08 : 0.93;
+  zoom  = Math.max(0.4, Math.min(5, zoom));
+}, { passive: false });
+
+// Click to select zone
+canvas.addEventListener('click', e => {
+  if (isDragging) return;
+  const proj = getProjection();
+  const cx = W/2, cy = H/2, rad = R*zoom;
+  let best = null, bestD = 22*22;
+  ZONES.forEach(z => {
+    const pt = proj([z.lng, z.lat]);
+    if (!pt) return;
+    const [px,py] = pt;
+    const d2 = (px-cx)**2 + (py-cy)**2;
+    if (d2 > rad*rad*0.95) return;
+    const d = (e.clientX-px)**2 + (e.clientY-py)**2;
+    if (d < bestD) { bestD=d; best=z; }
+  });
+  if (best) showInfo(best);
+  else hideInfo();
+});
+
+// ── Info panel ────────────────────────────────────────────────────
+const STATUS_LABEL = { war:'전면전 / ACTIVE WAR', closed:'완전 봉쇄 / FULLY CLOSED', conflict:'활성 분쟁 / ACTIVE CONFLICT', contested:'영토 분쟁 / CONTESTED', restricted:'제한 접근 / RESTRICTED', open:'자유 통과 / OPEN' };
+const STATUS_COLOR = { war:'#ffffff', closed:'#ff1010', conflict:'#ff4400', contested:'#ffcc00', restricted:'#ffaa00', open:'#00ff88' };
+
+function showInfo(z) {
+  document.getElementById('i-name').textContent   = z.name;
+  document.getElementById('i-en').textContent     = z.en;
+  document.getElementById('i-desc').textContent   = z.desc;
+  document.getElementById('i-tbar').style.width   = (z.tension*100)+'%';
+  document.getElementById('i-tbar').style.background = STATUS_COLOR[z.type]||'#ff8c00';
+  document.getElementById('i-tval').textContent   = z.tension.toFixed(3);
+  document.getElementById('i-status').textContent = STATUS_LABEL[z.type]||z.type;
+  document.getElementById('i-status').style.color = STATUS_COLOR[z.type]||'#ff8c00';
+  document.getElementById('i-coords').textContent = Math.abs(z.lat).toFixed(1)+(z.lat>=0?'°N':'°S')+' '+Math.abs(z.lng).toFixed(1)+(z.lng>=0?'°E':'°W');
+  document.getElementById('i-time').textContent   = new Date().toLocaleTimeString('ko-KR');
+
+  // 실시간 뉴스 표시
+  const newsWrap = document.getElementById('i-news-wrap');
+  const newsList = document.getElementById('i-news-list');
+  if (z.recentNews?.length) {
+    newsList.innerHTML = z.recentNews.map(n => {
+      const timeStr = n.pubDate
+        ? new Date(n.pubDate).toLocaleString('ko-KR', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})
+        : new Date().toLocaleTimeString('ko-KR');
+      return `<div class="news-item">
+        <span class="news-source">[${n.source}]</span><span class="news-time">${timeStr}</span>
+        <div class="news-title">${n.title.slice(0, 100)}</div>
+      </div>`;
+    }).join('');
+    newsWrap.style.display = 'block';
+  } else {
+    newsWrap.style.display = 'none';
+  }
+
+  document.getElementById('info').classList.add('show');
+}
+function hideInfo() {
+  document.getElementById('info').classList.remove('show');
+}
+
+// ── Stats ─────────────────────────────────────────────────────────
+function updateStats() {
+  const wr = ZONES.filter(z=>z.type==='war').length;
+  const cf = ZONES.filter(z=>z.type==='conflict'&&z.tension>.78).length;
+  const cl = ZONES.filter(z=>z.type==='closed').length;
+  const op = ZONES.filter(z=>z.type==='open').length;
+  const av = ZONES.reduce((s,z)=>s+z.tension,0)/ZONES.length;
+  document.getElementById('s-war').textContent      = wr;
+  document.getElementById('s-conflict').textContent = cf;
+  document.getElementById('s-closed').textContent   = cl;
+  document.getElementById('s-open').textContent     = op;
+  document.getElementById('s-tension').textContent  = (av*100).toFixed(1)+'%';
+  document.getElementById('s-time').textContent     = new Date().toLocaleTimeString('ko-KR');
+
+  const hotZones = ZONES.filter(z=>z.type==='war'||z.type==='conflict');
+  const avgC = hotZones.reduce((s,z)=>s+z.tension,0)/Math.max(1,hotZones.length);
+  const avgR = ZONES.filter(z=>z.type==='restricted'||z.type==='contested').reduce((s,z)=>s+z.tension,0)/Math.max(1,ZONES.filter(z=>z.type==='restricted'||z.type==='contested').length);
+  document.getElementById('db-conflict').style.width = (avgC*100)+'%';
+  document.getElementById('dv-conflict').textContent  = avgC.toFixed(2);
+  document.getElementById('db-restrict').style.width  = (avgR*100)+'%';
+  document.getElementById('dv-restrict').textContent  = avgR.toFixed(2);
+}
+updateStats();
+
+// ── GDELT 실시간 뉴스 연동 ─────────────────────────────────────────
+// 실제 속보로 국경 긴장도 조정 (GDELT Project API, 인증 불필요)
+const DEFAULT_TICKER = '▸ 한국-북한 DMZ 총격 사건 / GUNFIRE AT KOREA DMZ ▸ 가자지구 전쟁 지속 / GAZA WAR ONGOING ▸ 러시아-우크라이나 전선 이동 / UA-RU FRONTLINE SHIFT ▸ EU 솅겐 정상 운영 / EU SCHENGEN NORMAL ▸ 대만 해협 군사훈련 / TAIWAN STRAIT DRILLS ▸ 수단 내전 기근 선포 / SUDAN FAMINE DECLARED ▸ DRC M23 반군 공세 / DRC M23 OFFENSIVE ▸ 미얀마 내전 격화 / MYANMAR CIVIL WAR ESCALATES ▸ 말리 사헬 지하디스트 / MALI SAHEL JIHADISTS ▸';
+
+// ── 실시간 뉴스 피드 시스템 ──────────────────────────────────────────
+// 1) GDELT 실제 연결 시도 (성공하면 실제 헤드라인 사용)
+// 2) 실패 시 지역별 동적 뉴스 생성 (긴장도·타입 기반, 시각 포함)
+
+const NEWS_TEMPLATES = {
+  war: [
+    z => `▸ [속보] ${z.name} 전선 이동 감지 — 미사일 ${Math.floor(Math.random()*8+2)}발 발사 / FRONTLINE SHIFT DETECTED`,
+    z => `▸ [긴급] ${z.name} 민간인 대피령 / CIVILIAN EVACUATION ORDER — ${z.en}`,
+    z => `▸ ${z.name} 교전 격화, 국제사회 즉각 대응 요구 / FIGHTING INTENSIFIES`,
+    z => `▸ UN 안보리, ${z.en} 긴급 회의 소집 / UNSC EMERGENCY SESSION`,
+    z => `▸ ${z.name} 폭격 피해 민간 시설 확인 / CIVILIAN INFRASTRUCTURE HIT`,
+    z => `▸ [속보] ${z.en} — 사상자 수 집계 중 / CASUALTIES BEING COUNTED`,
+  ],
+  conflict: [
+    z => `▸ ${z.name} 무장 충돌 발생 / ARMED CLASHES REPORTED — ${z.en}`,
+    z => `▸ ${z.name} 긴장도 ${(z.tension*100).toFixed(0)}% — 국경 통제 강화 / BORDER CONTROLS TIGHTENED`,
+    z => `▸ 외교부, ${z.name} 여행 경보 격상 / TRAVEL ADVISORY ELEVATED`,
+    z => `▸ ${z.en} — 협상 결렬, 재충돌 우려 / TALKS COLLAPSE`,
+  ],
+  closed: [
+    z => `▸ ${z.name} 월경 시도 ${Math.floor(Math.random()*30+5)}건 차단 / CROSSING ATTEMPTS INTERCEPTED`,
+    z => `▸ ${z.name} 비무장화 회의 무기한 연기 / DEMILITARIZATION TALKS SUSPENDED`,
+    z => `▸ ${z.en} — 감시 드론 격추 사건 / SURVEILLANCE DRONE DOWNED`,
+  ],
+  restricted: [
+    z => `▸ ${z.name} 이민 행렬 ${Math.floor(Math.random()*200+100)}명 통제 / MIGRANTS INTERCEPTED AT ${z.en}`,
+    z => `▸ ${z.name} 임시 국경 폐쇄 발령 / TEMPORARY BORDER CLOSURE`,
+  ],
+  contested: [
+    z => `▸ ${z.name} 영유권 분쟁 — 군함 접근 포착 / NAVAL VESSEL DETECTED`,
+    z => `▸ ${z.en} 긴장 고조, 외교 회담 긴급 소집 / DIPLOMATIC TALKS CALLED`,
+  ],
+  open: [
+    z => `▸ ${z.name} 통행량 정상 / TRAFFIC NORMAL AT ${z.en}`,
+  ],
+};
+
+function generateDynamicTicker() {
+  // 긴장도 높은 순 정렬, 상위 존들의 뉴스 동적 생성
+  const sorted = [...ZONES].sort((a, b) => b.tension - a.tension);
+  const now    = new Date();
+  const timeStr = now.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'});
+
+  const items = [];
+  sorted.slice(0, 20).forEach((z, i) => {
+    const templates = NEWS_TEMPLATES[z.type] || NEWS_TEMPLATES.restricted;
+    const tpl = templates[Math.floor((Date.now() / 60000 + i * 3) % templates.length)];
+    items.push(tpl(z) + ` [${timeStr}]`);
+  });
+
+  // 정적 배경 뉴스 추가
+  items.push(
+    '▸ 유엔 난민기구 UNHCR: 전세계 강제이주민 1억 명 초과 / GLOBAL DISPLACED EXCEED 100M',
+    '▸ 국제앰네스티, 국경 폭력 보고서 발표 / AMNESTY INTERNATIONAL BORDER VIOLENCE REPORT',
+    '▸ SIPRI 세계 군비지출 사상 최고치 / GLOBAL MILITARY SPENDING AT RECORD HIGH',
+    '▸ 세계식량계획 WFP: 분쟁지역 식량 위기 심화 / FOOD CRISIS DEEPENS IN CONFLICT ZONES',
+  );
+
+  return items.join('   ');
+}
+
+// ── 실제 뉴스 소스 연결 ───────────────────────────────────────────
+// rss2json.com — CORS 허용 RSS→JSON 변환 (무료 150req/day)
+const RSS2JSON = 'https://api.rss2json.com/v1/api.json?rss_url=';
+const RSS_SOURCES = [
+  { name:'BBC',       url:'https://feeds.bbci.co.uk/news/world/rss.xml' },
+  { name:'Reuters',   url:'https://feeds.reuters.com/reuters/worldnews' },
+  { name:'Al Jazeera',url:'https://www.aljazeera.com/xml/rss/all.xml' },
+  { name:'AP',        url:'https://rss.ap.org/topics/world-news' },
+];
+
+async function tryRssSource(src) {
+  const r = await fetch(RSS2JSON + encodeURIComponent(src.url), { signal: AbortSignal.timeout(7000) });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const d = await r.json();
+  if (d.status !== 'ok' || !d.items?.length) throw new Error('no items');
+  return { source: src.name, items: d.items.slice(0, 20) };
+}
+
+async function tryGdelt() {
+  const url = 'https://api.gdeltproject.org/api/v2/doc/doc?query=war+OR+border+OR+conflict+OR+ceasefire&mode=artlist&format=json&maxrecords=20&SORTBY=DateDesc';
+  const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return await r.json();
+}
+
+// 단어 경계 포함 키워드 매칭 — 'lac' 같은 짧은 단어가 'black'에 걸리는 오류 방지
+function kwMatch(text, keywords) {
+  return keywords.some(kw => {
+    // 공백 포함 키프레이즈는 그대로, 단독 단어는 단어 경계 체크
+    if (kw.includes(' ')) return text.includes(kw);
+    return new RegExp('(?:^|[^a-z])' + kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?:[^a-z]|$)').test(text);
+  });
+}
+
+function applyArticlesToZones(articles) {
+  articles.forEach(article => {
+    const text = (article.title + ' ' + (article.pubDate || '')).toLowerCase();
+    ZONES.forEach(z => {
+      if (!z.keywords?.length) return;
+      if (!kwMatch(text, z.keywords)) return;
+      const spike = z.type === 'war' ? 0.04 : 0.025;
+      const maxT  = { war:.99, conflict:.97, closed:.92, contested:.88, restricted:.82 }[z.type] || .90;
+      z.tension = Math.min(maxT, z.tension + spike);
+      // 최근 뉴스 최대 3개 저장 (중복 제거, 최신순)
+      if (!z.recentNews) z.recentNews = [];
+      const entry = { title: article.title, source: article._source || 'NEWS', pubDate: article.pubDate || null };
+      if (!z.recentNews.some(n => n.title === entry.title)) {
+        z.recentNews.push(entry);
+        // pubDate 기준 최신순 정렬 후 상위 3개 유지
+        z.recentNews.sort((a, b) => new Date(b.pubDate||0) - new Date(a.pubDate||0));
+        z.recentNews = z.recentNews.slice(0, 3);
+      }
+    });
+  });
+  updateStats();
+}
+
+let liveSource = null; // 연결된 소스 이름
+
+async function fetchLiveNews() {
+  const el     = document.getElementById('s-news-status');
+  const tickEl = document.getElementById('tick-text');
+  el.textContent = '연결 중...';
+  el.style.color = '#886600';
+
+  // 동적 티커 즉시 표시 (연결 기다리는 동안도 살아있게)
+  if (tickEl) tickEl.textContent = generateDynamicTicker();
+
+  // 1) RSS 소스 병렬 시도 (BBC·Reuters·AP·CNN)
+  const rssResults = await Promise.allSettled(RSS_SOURCES.map(tryRssSource));
+  const succeeded  = rssResults.filter(r => r.status === 'fulfilled').map(r => r.value);
+
+  if (succeeded.length > 0) {
+    // 모든 성공한 소스의 기사 합산
+    const allItems = succeeded.flatMap(s => s.items.map(i => ({ ...i, _source: s.source })));
+    allItems.sort((a, b) => new Date(b.pubDate||0) - new Date(a.pubDate||0));
+
+    // 전쟁·국경·분쟁 관련 키워드 필터
+    const CONFLICT_KW = ['war','attack','missile','troops','border','ceasefire','bomb','strike','kill','dead','wound','injure','soldier','military','conflict','invasion','frontline','evacuation','refugee','sanction','offensive','insurgent','drone','airstrike','fighting','battle','rebel','coup','protest','violence','explosion','hostage','nuclear','detain','arrest','fire','shot','clash','siege','occupation','blockade','humanitarian','crisis','flee','displaced','casualt','terror','force','army','navy','airforce','gun','weapon','peace talk','negotiat','treaty','ceasefire','withdraw','deploy','mobiliz'];
+    const relevant = allItems.filter(a => {
+      const t = a.title.toLowerCase();
+      return CONFLICT_KW.some(k => t.includes(k));
+    });
+    const display = (relevant.length >= 5 ? relevant : allItems).slice(0, 20);
+
+    const headlines = display.map(a => `▸ [${a._source}] ${a.title.slice(0, 85)}`).join('   ');
+    if (tickEl) tickEl.textContent = headlines + '   ' + generateDynamicTicker();
+
+    applyArticlesToZones(allItems.map(i => ({ title: i.title, pubDate: i.pubDate, _source: i._source })));
+    liveSource = succeeded.map(s => s.source).join('·');
+    el.textContent = liveSource + ' 연결 ' + new Date().toLocaleTimeString('ko-KR');
+    el.style.color = '#00ff88';
+    return;
+  }
+
+  // 2) RSS 전부 실패 → GDELT 시도
+  try {
+    const d = await tryGdelt();
+    if (d.articles?.length) {
+      const headlines = d.articles.slice(0, 15).map(a => '▸ [GDELT] ' + a.title.slice(0, 85)).join('   ');
+      if (tickEl) tickEl.textContent = headlines + '   ' + generateDynamicTicker();
+      applyArticlesToZones(d.articles.map(a => ({ title: a.title })));
+      liveSource = 'GDELT';
+      el.textContent = 'GDELT 연결 ' + new Date().toLocaleTimeString('ko-KR');
+      el.style.color = '#ffaa00';
+      return;
+    }
+  } catch(_) {}
+
+  // 3) 모두 실패 → 시뮬레이션 모드
+  liveSource = null;
+  el.textContent = '시뮬레이션 모드 ' + new Date().toLocaleTimeString('ko-KR');
+  el.style.color = '#ff8c00';
+}
+
+// 즉시 + 2분마다 갱신
+fetchLiveNews();
+setInterval(fetchLiveNews, 2 * 60 * 1000);
+// 티커 30초마다 동적 갱신 (오프라인 시)
+setInterval(() => {
+  if (!liveSource) {
+    const tickEl = document.getElementById('tick-text');
+    if (tickEl) tickEl.textContent = generateDynamicTicker();
+  }
+}, 30 * 1000);
+
+// ── UI controls ───────────────────────────────────────────────────
+function toggleBtn(id) { document.getElementById('btn-'+id).classList.toggle('on'); }
+function togglePlay() {
+  playing = !playing;
+  document.getElementById('btn-play').classList.toggle('on', playing);
+}
+function toggleLive() {
+  live = !live;
+  document.getElementById('btn-live').classList.toggle('on', live);
+}
+
+// ── Glitch ────────────────────────────────────────────────────────
+function triggerGlitch() {
+  glitchFrames = 30;
+}
+
+// ── Search ────────────────────────────────────────────────────────
+document.getElementById('search-input').addEventListener('input', e => {
+  const q = e.target.value.trim().toLowerCase();
+  if (!q) return;
+  const found = ZONES.find(z=>z.name.toLowerCase().includes(q)||z.en.toLowerCase().includes(q));
+  if (found) {
+    rotX = -found.lng;
+    rotY = -found.lat;
+    showInfo(found);
+  }
+});
+
+// ── Save ──────────────────────────────────────────────────────────
+function saveFile() {
+  const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  const blob = new Blob([html], { type:'text/html;charset=utf-8' });
+  const a    = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(blob),
+    download: '경계의 시뮬레이션.html'
+  });
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ── Resize ────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  W = window.innerWidth; H = window.innerHeight;
+  canvas.width = W; canvas.height = H;
+  R = Math.min(W, H) * 0.38;
+});
+
+// ── Start ─────────────────────────────────────────────────────────
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
