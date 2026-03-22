@@ -30,83 +30,83 @@ body{
 
 /* ── Title ── */
 #title{
-  position:fixed;top:22px;left:22px;z-index:50;pointer-events:none;
+  position:fixed;top:24px;left:24px;z-index:50;pointer-events:none;
 }
 .t-ko{
-  font-size:18px;font-weight:700;letter-spacing:5px;
+  font-size:24px;font-weight:700;letter-spacing:6px;
   color:#ff8c00;
   text-shadow:0 0 8px #ff8c00,0 0 20px #ff6600,0 0 50px #ff3300;
 }
-.t-en{font-size:8px;letter-spacing:10px;color:#ff6600;opacity:.7;margin-top:5px;}
-.t-sub{font-size:7px;letter-spacing:4px;color:#883300;opacity:.5;margin-top:3px;}
+.t-en{font-size:11px;letter-spacing:11px;color:#ff6600;opacity:.7;margin-top:6px;}
+.t-sub{font-size:9px;letter-spacing:4px;color:#883300;opacity:.5;margin-top:4px;}
 
 /* ── Stats ── */
 #stats{
-  position:fixed;top:88px;left:22px;z-index:50;pointer-events:none;
+  position:fixed;top:106px;left:24px;z-index:50;pointer-events:none;
 }
-.st{font-size:7px;letter-spacing:2px;color:#883300;margin:4px 0;}
+.st{font-size:9px;letter-spacing:2px;color:#883300;margin:5px 0;}
 .st span{color:#ff8c00;}
 
 /* ── Search ── */
-#search{position:fixed;top:22px;right:22px;z-index:50;}
+#search{position:fixed;top:24px;right:24px;z-index:50;}
 #search-input{
   background:rgba(3,1,0,.85);border:1px solid #ff5500;
-  color:#ff8c00;padding:6px 12px;
-  font-family:'Courier New',monospace;font-size:8px;letter-spacing:2px;
-  width:180px;outline:none;
+  color:#ff8c00;padding:8px 14px;
+  font-family:'Courier New',monospace;font-size:10px;letter-spacing:2px;
+  width:220px;outline:none;
 }
 #search-input::placeholder{color:#663300;opacity:.6;}
 #search-input:focus{box-shadow:0 0 12px rgba(255,140,0,.25);}
 
 /* ── Control Panel ── */
 #ctrl{
-  position:fixed;bottom:36px;left:22px;z-index:50;
+  position:fixed;bottom:42px;left:24px;z-index:50;
   background:rgba(3,1,0,.92);
   border:1px solid rgba(255,100,0,.6);
-  padding:14px;width:220px;
+  padding:18px;width:270px;
   box-shadow:0 0 30px rgba(255,140,0,.08),inset 0 0 15px rgba(255,140,0,.03);
 }
-.cp-head{font-size:7px;letter-spacing:4px;color:#ff6600;opacity:.6;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid rgba(255,140,0,.15);}
-.btn-row{display:flex;gap:5px;margin-bottom:7px;flex-wrap:wrap;}
-.cbtn{font-family:'Courier New',monospace;font-size:7px;letter-spacing:2px;padding:5px 9px;border:1px solid currentColor;background:transparent;cursor:pointer;transition:all .2s;}
+.cp-head{font-size:9px;letter-spacing:4px;color:#ff6600;opacity:.6;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,140,0,.15);}
+.btn-row{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
+.cbtn{font-family:'Courier New',monospace;font-size:9px;letter-spacing:2px;padding:7px 12px;border:1px solid currentColor;background:transparent;cursor:pointer;transition:all .2s;}
 .cbtn.nation{color:#cc44ff;border-color:#cc44ff;}
 .cbtn.inframe{color:#ff8c00;border-color:#ff8c00;}
 .cbtn.play{color:#ff8c00;border-color:#ff8c00;}
 .cbtn.live{color:#00ff88;border-color:#00ff88;}
 .cbtn.on{filter:brightness(2);background:rgba(255,255,255,.08);box-shadow:0 0 8px currentColor;}
 .cbtn:hover{box-shadow:0 0 10px currentColor;filter:brightness(1.5);}
-.divider{height:1px;background:rgba(255,140,0,.12);margin:10px 0;}
-.drow{display:flex;align-items:center;margin:5px 0;gap:6px;font-size:7px;}
-.dlabel{color:#883300;letter-spacing:1px;min-width:52px;}
-.dbar-wrap{flex:1;height:3px;background:#1a0500;overflow:hidden;}
+.divider{height:1px;background:rgba(255,140,0,.12);margin:12px 0;}
+.drow{display:flex;align-items:center;margin:6px 0;gap:8px;font-size:9px;}
+.dlabel{color:#883300;letter-spacing:1px;min-width:62px;}
+.dbar-wrap{flex:1;height:4px;background:#1a0500;overflow:hidden;}
 .dbar{height:100%;background:linear-gradient(to right,#00ff88,#ff8c00,#ff0000);transition:width .6s ease;}
-.dval{color:#ff8c00;letter-spacing:1px;min-width:28px;text-align:right;}
-.legend{margin-top:8px;}
-.lrow{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:7px;letter-spacing:1px;}
-.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.dval{color:#ff8c00;letter-spacing:1px;min-width:34px;text-align:right;}
+.legend{margin-top:10px;}
+.lrow{display:flex;align-items:center;gap:10px;margin:5px 0;font-size:9px;letter-spacing:1px;}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 
 /* ── Info Panel ── */
 #info{
-  position:fixed;top:50%;right:22px;transform:translateY(-50%);
+  position:fixed;top:50%;right:24px;transform:translateY(-50%);
   z-index:50;background:rgba(3,1,0,.92);
   border:1px solid rgba(255,100,0,.5);
-  padding:16px;width:240px;
+  padding:20px;width:290px;
   opacity:0;transition:opacity .3s ease;pointer-events:none;
 }
 #info.show{opacity:1;pointer-events:auto;}
-.iname{font-size:11px;letter-spacing:3px;color:#ff8c00;margin-bottom:4px;}
-.iname-en{font-size:8px;letter-spacing:4px;color:#cc4400;margin-bottom:12px;opacity:.7;}
-.idesc{font-size:8px;letter-spacing:1px;line-height:1.6;color:#cc6600;margin-bottom:12px;opacity:.8;}
-.imeta{font-size:7px;letter-spacing:2px;margin:5px 0;display:flex;justify-content:space-between;}
+.iname{font-size:14px;letter-spacing:3px;color:#ff8c00;margin-bottom:5px;}
+.iname-en{font-size:10px;letter-spacing:4px;color:#cc4400;margin-bottom:14px;opacity:.7;}
+.idesc{font-size:10px;letter-spacing:1px;line-height:1.7;color:#cc6600;margin-bottom:14px;opacity:.8;}
+.imeta{font-size:9px;letter-spacing:2px;margin:6px 0;display:flex;justify-content:space-between;}
 .imeta span:first-child{color:#663300;}
 .imeta span:last-child{color:#ff8c00;}
-.itbar{width:100%;height:4px;background:#1a0500;margin:8px 0 12px;}
+.itbar{width:100%;height:5px;background:#1a0500;margin:10px 0 14px;}
 .itfill{height:100%;transition:width .5s ease;}
-#close-info{position:absolute;top:8px;right:8px;background:transparent;border:1px solid #663300;color:#cc4400;font-size:8px;padding:3px 7px;font-family:'Courier New',monospace;cursor:pointer;}
-.news-item{margin-bottom:7px;}
-.news-source{font-size:6px;letter-spacing:2px;color:#ff6600;opacity:.7;}
-.news-time{font-size:6px;letter-spacing:1px;color:#553300;float:right;}
-.news-title{font-size:7px;letter-spacing:1px;line-height:1.5;color:#cc6600;margin-top:2px;opacity:.9;}
+#close-info{position:absolute;top:10px;right:10px;background:transparent;border:1px solid #663300;color:#cc4400;font-size:10px;padding:4px 9px;font-family:'Courier New',monospace;cursor:pointer;}
+.news-item{margin-bottom:9px;}
+.news-source{font-size:8px;letter-spacing:2px;color:#ff6600;opacity:.7;}
+.news-time{font-size:8px;letter-spacing:1px;color:#553300;float:right;}
+.news-title{font-size:9px;letter-spacing:1px;line-height:1.5;color:#cc6600;margin-top:3px;opacity:.9;}
 
 /* ── Labels overlay ── */
 #labels{position:fixed;inset:0;pointer-events:none;z-index:40;}
@@ -126,17 +126,17 @@ body{
 #ticker{
   position:fixed;bottom:0;left:0;right:0;z-index:50;
   background:rgba(3,1,0,.95);border-top:1px solid rgba(255,140,0,.2);
-  height:26px;display:flex;align-items:center;overflow:hidden;
+  height:34px;display:flex;align-items:center;overflow:hidden;
 }
-.tick-tag{position:absolute;left:0;height:100%;background:#ff8c00;color:#000;font-size:7px;font-weight:700;letter-spacing:3px;padding:0 12px;display:flex;align-items:center;white-space:nowrap;z-index:1;}
-.tick-inner{padding-left:80px;overflow:hidden;flex:1;height:100%;display:flex;align-items:center;}
-.tick-text{white-space:nowrap;font-size:7px;letter-spacing:2px;color:#cc5500;display:inline-block;animation:tickscroll 90s linear infinite;}
+.tick-tag{position:absolute;left:0;height:100%;background:#ff8c00;color:#000;font-size:10px;font-weight:700;letter-spacing:3px;padding:0 14px;display:flex;align-items:center;white-space:nowrap;z-index:1;}
+.tick-inner{padding-left:100px;overflow:hidden;flex:1;height:100%;display:flex;align-items:center;}
+.tick-text{white-space:nowrap;font-size:9px;letter-spacing:2px;color:#cc5500;display:inline-block;animation:tickscroll 240s linear infinite;}
 @keyframes tickscroll{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
 
 /* ── Buttons ── */
-#save-btn{position:fixed;bottom:62px;right:22px;z-index:50;background:transparent;border:1px solid #553300;color:#ff8c00;padding:8px 14px;font-family:'Courier New',monospace;font-size:7px;letter-spacing:3px;cursor:pointer;transition:all .2s;}
+#save-btn{position:fixed;bottom:76px;right:24px;z-index:50;background:transparent;border:1px solid #553300;color:#ff8c00;padding:10px 16px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:3px;cursor:pointer;transition:all .2s;}
 #save-btn:hover{background:rgba(255,140,0,.08);box-shadow:0 0 12px rgba(255,140,0,.2);}
-#glitch-btn{position:fixed;bottom:36px;right:22px;z-index:50;background:transparent;border:1px solid #330033;color:#9933cc;padding:8px 14px;font-family:'Courier New',monospace;font-size:7px;letter-spacing:3px;cursor:pointer;transition:all .2s;}
+#glitch-btn{position:fixed;bottom:42px;right:24px;z-index:50;background:transparent;border:1px solid #330033;color:#9933cc;padding:10px 16px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:3px;cursor:pointer;transition:all .2s;}
 #glitch-btn:hover{background:rgba(153,51,204,.08);box-shadow:0 0 12px rgba(153,51,204,.3);}
 </style>
 </head>
@@ -154,6 +154,8 @@ body{
 
 <!-- Stats -->
 <div id="stats">
+  <div class="st">TOTAL COUNTRIES <span id="s-total">195</span></div>
+  <div class="st">MONITORING <span id="s-monitoring">—</span></div>
   <div class="st" style="color:#ff2020;animation:warFlash .8s infinite">WAR ZONES <span id="s-war" style="color:#ff2020">—</span></div>
   <div class="st">ACTIVE CONFLICTS <span id="s-conflict">—</span></div>
   <div class="st">CLOSED BORDERS <span id="s-closed">—</span></div>
@@ -346,6 +348,160 @@ const ZONES = [
     keywords:['schengen','european union border','free movement'] },
   { id:'MA-DZ', name:'모로코-알제리',             en:'MOROCCO–ALGERIA',            lat:32.0,  lng:-2.5,   tension:.60, type:'closed',     desc:'2021년 외교 단절. 국경 완전 봉쇄. 서사하라 영유권 갈등.',
     keywords:['morocco algeria','maghreb border','western sahara'] },
+
+  // ─ 중동 추가 ─
+  { id:'TR-SY', name:'터키-시리아 국경',      en:'TURKEY–SYRIA BORDER',        lat:37.0,  lng:37.5,   tension:.80, type:'restricted', desc:'쿠르드 PKK 대테러작전. 시리아 난민 370만 명 체류. 정기 공습.',
+    keywords:['turkey syria','turkish border','pkk','kurds turkey','erdogan syria'] },
+  { id:'LB',   name:'레바논 위기',            en:'LEBANON CRISIS',             lat:33.9,  lng:35.5,   tension:.82, type:'conflict',   desc:'경제붕괴·헤즈볼라 갈등. 국가부도 상태. 이스라엘 공습 지속.',
+    keywords:['lebanon','beirut','hezbollah','lebanese','laf'] },
+  { id:'IQ',   name:'이라크',                en:'IRAQ',                        lat:33.0,  lng:44.0,   tension:.70, type:'conflict',   desc:'친이란 민병대 활동. ISIS 잔존. 쿠르드 자치 갈등.',
+    keywords:['iraq','baghdad','pmu','isis iraq','iraqi'] },
+  { id:'SA-YE', name:'사우디-예멘 국경',      en:'SAUDI–YEMEN BORDER',         lat:17.5,  lng:44.5,   tension:.80, type:'restricted', desc:'후티 드론·미사일 공격. 리야드 방공망 상시 가동.',
+    keywords:['saudi yemen','riyadh houthi','saudi arabia attack'] },
+  { id:'EG-GZ', name:'이집트-가자 국경',      en:'EGYPT–GAZA BORDER',          lat:31.0,  lng:34.2,   tension:.85, type:'closed',     desc:'라파 국경 봉쇄. 구호물자 차단. 이집트 완충지대 확장.',
+    keywords:['egypt gaza','rafah crossing','sinai','egypt border'] },
+  { id:'IR-PK', name:'이란-파키스탄 국경',    en:'IRAN–PAKISTAN BORDER',       lat:27.5,  lng:61.5,   tension:.72, type:'conflict',   desc:'2024년 상호 공습. 발루치 반군 활동. 마약 밀수 루트.',
+    keywords:['iran pakistan','baluchi','iran strike pakistan'] },
+  { id:'TR-GR', name:'터키-그리스 에게해',    en:'TURKEY–GREECE AEGEAN',       lat:39.5,  lng:26.0,   tension:.65, type:'contested',  desc:'에게해 영공·영해 분쟁. 이주민 충돌. NATO 내 갈등.',
+    keywords:['turkey greece','aegean','greek turkish','migrants aegean'] },
+
+  // ─ 아프리카 추가 ─
+  { id:'SO',   name:'소말리아',               en:'SOMALIA',                     lat:5.5,   lng:46.0,   tension:.85, type:'war',        desc:'알-샤밥 지속 공격. AU미션 철수. 모가디슈 불안정.',
+    keywords:['somalia','al-shabaab','mogadishu','somali','amisom'] },
+  { id:'NG',   name:'나이지리아',             en:'NIGERIA',                     lat:9.5,   lng:8.5,    tension:.80, type:'conflict',   desc:'보코하람/ISWAP 북동부 공격. 부족 분쟁. 산유 삼각주 무장.',
+    keywords:['nigeria','boko haram','iswap','biafra','niger delta'] },
+  { id:'CF',   name:'중앙아프리카공화국',      en:'CENTRAL AFRICAN REPUBLIC',    lat:5.5,   lng:19.0,   tension:.85, type:'war',        desc:'바그너 철수 후 권력 공백. 반군 연합 재조직.',
+    keywords:['central african republic','bangui','wagner car','car conflict'] },
+  { id:'MZ',   name:'모잠비크',               en:'MOZAMBIQUE',                  lat:-13.0, lng:39.5,   tension:.78, type:'conflict',   desc:'카보 델가도 이슬람 반군. 르완다군·SADC 개입.',
+    keywords:['mozambique','cabo delgado','mozambique insurgency','palma'] },
+  { id:'CM',   name:'카메룬 앙글로폰',         en:'CAMEROON ANGLOPHONE',         lat:5.8,   lng:10.0,   tension:.75, type:'conflict',   desc:'앙글로폰 분리주의 전쟁. 암바조니아 선포. 민간인 학살.',
+    keywords:['cameroon','ambazonians','cameroon crisis','biya','anglophone'] },
+  { id:'BI',   name:'부룬디',                 en:'BURUNDI',                     lat:-3.5,  lng:29.5,   tension:.70, type:'conflict',   desc:'정치 탄압. DRC 내 무장세력 지원 의혹.',
+    keywords:['burundi','bujumbura','burundi conflict'] },
+  { id:'ZW',   name:'짐바브웨',               en:'ZIMBABWE',                    lat:-20.0, lng:30.0,   tension:.55, type:'restricted', desc:'음낭가과 정권 억압. 경제 위기 지속. 야당 탄압.',
+    keywords:['zimbabwe','mnangagwa','harare','zanu'] },
+  { id:'BF',   name:'부르키나파소',            en:'BURKINA FASO',                lat:12.0,  lng:-2.0,   tension:.88, type:'war',        desc:'러시아 바그너 개입. 프랑스 철수 후 공백. 민간인 학살.',
+    keywords:['burkina faso','sahel','junta','jihadist','burkina'] },
+  { id:'ET',   name:'에티오피아',              en:'ETHIOPIA',                    lat:8.0,   lng:38.5,   tension:.78, type:'conflict',   desc:'티그라이 전쟁 후 오로미아 갈등 지속. 암하라 지역 교전.',
+    keywords:['ethiopia','oromia','amhara','tigray','addis ababa'] },
+  { id:'CD-UG', name:'콩고-우간다 국경',       en:'DRC–UGANDA BORDER',           lat:1.0,   lng:30.0,   tension:.72, type:'conflict',   desc:'ADF 반군 월경 공격. 우간다군 DRC 진입.',
+    keywords:['adf uganda','congo uganda','allied democratic forces'] },
+  { id:'MA-WS', name:'서사하라',               en:'WESTERN SAHARA',              lat:24.5,  lng:-13.0,  tension:.68, type:'contested',  desc:'폴리사리오 전선 vs 모로코. 알제리 지원. 40년 미해결.',
+    keywords:['western sahara','polisario','sahrawi'] },
+  { id:'GN',   name:'기니',                   en:'GUINEA',                      lat:11.0,  lng:-11.5,  tension:.65, type:'restricted', desc:'군부 쿠데타. 서아프리카 민주주의 후퇴. ECOWAS 제재.',
+    keywords:['guinea coup','guinea conakry','ecowas','west africa junta'] },
+  { id:'EG-LY', name:'이집트-리비아 국경',     en:'EGYPT–LIBYA BORDER',          lat:27.0,  lng:25.0,   tension:.62, type:'restricted', desc:'시나이 IS 세력. 리비아 방면 국경 통제.',
+    keywords:['egypt sinai','sinai insurgency','egypt libya'] },
+  { id:'TZ-MZ', name:'탄자니아-모잠비크',      en:'TANZANIA–MOZAMBIQUE BORDER',  lat:-10.5, lng:38.5,   tension:.60, type:'restricted', desc:'반군 월경 활동. 난민 유입. 국경 군사화.',
+    keywords:['tanzania mozambique','ansar al-sunna'] },
+
+  // ─ 유럽 추가 ─
+  { id:'BA',   name:'보스니아',               en:'BOSNIA – REPUBLIKA SRPSKA',   lat:44.0,  lng:17.5,   tension:.68, type:'contested',  desc:'스르프스카공화국 독립 위협. 도딕 반EU. NATO 경계.',
+    keywords:['bosnia','republika srpska','dodik','balkans','sarajevo'] },
+  { id:'RU-FI', name:'러시아-핀란드 국경',     en:'RUSSIA–FINLAND BORDER',       lat:63.0,  lng:29.5,   tension:.70, type:'restricted', desc:'핀란드 NATO 가입 후 1,340km 신규 NATO-러시아 접경.',
+    keywords:['finland russia','nato finland','russian border finland'] },
+  { id:'KAL',  name:'칼리닌그라드',            en:'KALININGRAD EXCLAVE',         lat:54.7,  lng:20.5,   tension:.72, type:'restricted', desc:'러시아 월경 영토. 발트 3국 포위 차단 논란. 미사일 배치.',
+    keywords:['kaliningrad','russian exclave','nato corridor','suwalki'] },
+  { id:'HU-RS', name:'헝가리-세르비아 국경',    en:'HUNGARY–SERBIA BORDER',       lat:46.0,  lng:19.5,   tension:.58, type:'restricted', desc:'오르반 철조망. 발칸 루트 차단. 이주민 강제 송환.',
+    keywords:['hungary border','orban migration','balkan route'] },
+  { id:'TR-BG', name:'터키-불가리아 국경',      en:'TURKEY–BULGARIA BORDER',      lat:41.8,  lng:26.5,   tension:.62, type:'restricted', desc:'EU 외부 국경. 이주민 폭증. 불법 월경 차단 울타리.',
+    keywords:['turkey bulgaria','migration balkans','illegal border eu'] },
+
+  // ─ 동아시아 추가 ─
+  { id:'JP-CN', name:'센카쿠-댜오위다오',       en:'SENKAKU / DIAOYU ISLANDS',    lat:25.7,  lng:123.5,  tension:.80, type:'contested',  desc:'중·일 영유권 분쟁. 중국 해경 상시 침입. 자위대 경계 강화.',
+    keywords:['senkaku','diaoyu','japan china','east china sea'] },
+  { id:'JP-RU', name:'쿠릴 열도',              en:'KURIL ISLANDS',               lat:44.5,  lng:147.5,  tension:.62, type:'contested',  desc:'일·러 평화조약 미체결. 쿠릴(북방 영토) 영유권.',
+    keywords:['kuril islands','northern territories','japan russia islands'] },
+  { id:'PH-CN', name:'필리핀-중국 (WPS)',       en:'PHILIPPINES–CHINA (WPS)',     lat:11.0,  lng:118.5,  tension:.82, type:'conflict',   desc:'황옌다오·스프래틀리. 수상 충돌. 미 군사 협력 강화.',
+    keywords:['philippines china','scarborough','spratly','pcg','phl coast guard'] },
+  { id:'CN-VN', name:'중국-베트남',             en:'CHINA–VIETNAM',               lat:22.5,  lng:107.0,  tension:.65, type:'contested',  desc:'남중국해 어선 충돌. 통킹만 경계. 역사적 영토 분쟁.',
+    keywords:['china vietnam','vietnamese fishermen','south china sea vietnam'] },
+  { id:'KH-TH', name:'캄보디아-태국 국경',      en:'CAMBODIA–THAILAND BORDER',    lat:14.5,  lng:103.5,  tension:.50, type:'contested',  desc:'쁘레아 비헤아르 사원 영유권. 양국 군사 대치 잔존.',
+    keywords:['cambodia thailand','preah vihear'] },
+  { id:'JP-KP', name:'일본-북한',               en:'JAPAN–N.KOREA',               lat:37.5,  lng:133.0,  tension:.75, type:'restricted', desc:'미사일 발사 반복. 납치 피해자 문제. EEZ 침범.',
+    keywords:['north korea missile','dprk japan','kim missile launch','japan missile'] },
+
+  // ─ 동남아시아 추가 ─
+  { id:'TH-MM', name:'태국-미얀마 국경',        en:'THAILAND–MYANMAR BORDER',     lat:17.0,  lng:98.5,   tension:.80, type:'restricted', desc:'미얀마 내전 난민 10만+ 태국 입국. 국경 포격 사건.',
+    keywords:['thailand myanmar','thai border','myanmar refugees','thai camp'] },
+  { id:'PH-S',  name:'필리핀 남부',             en:'PHILIPPINES SOUTH',           lat:7.5,   lng:124.5,  tension:.70, type:'conflict',   desc:'ASG·BIFF 테러. 모로 독립 운동. 방사모로 자치구 불안정.',
+    keywords:['mindanao','abu sayyaf','philippines insurgency','moro','biff'] },
+  { id:'ID-WP', name:'인도네시아-서파푸아',      en:'INDONESIA – WEST PAPUA',      lat:-4.0,  lng:138.0,  tension:.72, type:'conflict',   desc:'OPM 독립군 활동. 자원 개발 갈등. 언론 접근 차단.',
+    keywords:['west papua','tnpb','papua indonesia','papua independence'] },
+  { id:'MY-PH', name:'말레이시아-필리핀 사바',   en:'MALAYSIA–PHILIPPINES (SABAH)',lat:5.5,   lng:117.5,  tension:.55, type:'contested',  desc:'사바 술탄국 영유권 주장. 술루 해 무장세력 활동.',
+    keywords:['sabah','sulu sultan','malaysia philippines'] },
+
+  // ─ 중앙아시아 추가 ─
+  { id:'UZ-TJ', name:'우즈벡-타지크 국경',      en:'UZBEKISTAN–TAJIKISTAN',       lat:40.5,  lng:70.5,   tension:.60, type:'contested',  desc:'페르가나 계곡 수자원·영토 분쟁. 간헐적 충돌.',
+    keywords:['uzbekistan tajikistan','fergana valley','central asia border'] },
+  { id:'TM',   name:'투르크메니스탄',            en:'TURKMENISTAN',                lat:40.0,  lng:59.0,   tension:.45, type:'closed',     desc:'세계 최폐쇄 국가 중 하나. 독재 체제.',
+    keywords:['turkmenistan','ashgabat','closed borders','berdimuhamedov'] },
+  { id:'AZ-IR', name:'아제르바이잔-이란 국경',   en:'AZERBAIJAN–IRAN BORDER',      lat:39.0,  lng:47.5,   tension:.68, type:'restricted', desc:'이란 내 아제르 소수민족 분리 우려. 이스라엘-아제르 협력 견제.',
+    keywords:['azerbaijan iran','baku tehran','zangezur'] },
+
+  // ─ 남아시아 추가 ─
+  { id:'PK',   name:'파키스탄 내부',            en:'PAKISTAN – INTERNAL',         lat:30.0,  lng:70.0,   tension:.78, type:'conflict',   desc:'TTP 테러 급증. 발루치스탄 분리운동. 군-정치 갈등.',
+    keywords:['pakistan ttp','tehrik-e-taliban','balochistan','islamabad'] },
+  { id:'LK',   name:'스리랑카',                en:'SRI LANKA',                    lat:7.5,   lng:80.5,   tension:.50, type:'restricted', desc:'타밀 문제 미해결. 경제 위기 후 정치 불안.',
+    keywords:['sri lanka','colombo','tamil','rajapaksa'] },
+  { id:'NP-IN', name:'네팔-인도 국경',          en:'NEPAL–INDIA BORDER',          lat:28.5,  lng:81.5,   tension:.55, type:'contested',  desc:'칼라파니·리풀레크 영유권. 2020년 지도 분쟁.',
+    keywords:['nepal india','kalapani','nepal border dispute'] },
+  { id:'BD',   name:'방글라데시',               en:'BANGLADESH',                   lat:23.5,  lng:90.5,   tension:.65, type:'conflict',   desc:'하시나 퇴진 후 과도정부. 힌두 소수민족 공격.',
+    keywords:['bangladesh','dhaka','hasina','yunus bangladesh','bangladesh unrest'] },
+  { id:'CN-XJ', name:'신장(위구르)',            en:'CHINA – XINJIANG',             lat:41.0,  lng:85.5,   tension:.70, type:'restricted', desc:'위구르족 억압. 수용소 의혹. 면화 제재.',
+    keywords:['xinjiang','uyghur','xinjiang camp','cotton xinjiang'] },
+  { id:'CN-TIB', name:'티베트',                en:'CHINA – TIBET',                lat:31.0,  lng:88.0,   tension:.65, type:'closed',     desc:'달라이 라마 망명정부. 시위 탄압. 외부 접근 차단.',
+    keywords:['tibet','tibetan','dalai lama','lhasa','tibet crackdown'] },
+
+  // ─ 아메리카 추가 ─
+  { id:'HT',   name:'아이티',                  en:'HAITI',                        lat:19.0,  lng:-72.5,  tension:.90, type:'war',        desc:'갱단 무법 국가. 케냐군 개입. 포르토프랭스 점령.',
+    keywords:['haiti','gang haiti','port-au-prince','haiti gang','barbecue'] },
+  { id:'CO',   name:'콜롬비아',                en:'COLOMBIA',                      lat:3.5,   lng:-73.5,  tension:.75, type:'conflict',   desc:'ELN 게릴라 협상 중단. 마약 카르텔 확장.',
+    keywords:['colombia','eln','farc','guerrilla colombia','cartel colombia'] },
+  { id:'EC',   name:'에콰도르',                en:'ECUADOR',                       lat:-1.0,  lng:-78.0,  tension:.82, type:'war',        desc:'멕시코 카르텔 침투. 감옥 반란. 비상사태 선포 반복.',
+    keywords:['ecuador','ecuador cartel','ecuador violence','los lobos'] },
+  { id:'CU',   name:'쿠바',                   en:'CUBA',                          lat:22.0,  lng:-80.0,  tension:.60, type:'restricted', desc:'미 제재 지속. 2021년 민주화 시위 탄압. 에너지 위기.',
+    keywords:['cuba','havana','cuban','us cuba embargo'] },
+  { id:'MX-GT', name:'멕시코-과테말라 국경',   en:'MEXICO–GUATEMALA BORDER',      lat:16.5,  lng:-92.0,  tension:.70, type:'restricted', desc:'카르텔 밀수 루트. 이주민 캐러밴. 멕시코 강제 단속.',
+    keywords:['mexico guatemala','central america migration','caravans','ms13'] },
+  { id:'NI',   name:'니카라과',               en:'NICARAGUA',                     lat:12.5,  lng:-85.5,  tension:.55, type:'restricted', desc:'오르테가 독재. 야당 탄압. 미국 제재.',
+    keywords:['nicaragua','ortega','managua','nicaragua opposition'] },
+  { id:'BR-VE', name:'브라질-베네수엘라 국경', en:'BRAZIL–VENEZUELA BORDER',      lat:4.5,   lng:-61.5,  tension:.65, type:'restricted', desc:'베네수엘라 이민자 대량 유입. 야노마미 원주민 침탈.',
+    keywords:['brazil venezuela','yanomami','roraima','venezuelans brazil'] },
+  { id:'PE',   name:'페루',                   en:'PERU',                          lat:-10.0, lng:-76.0,  tension:.55, type:'conflict',   desc:'정치 불안. 반정부 시위. 마약 밀수 루트.',
+    keywords:['peru','lima protest','boluarte','shining path'] },
+
+  // ─ 태평양·오세아니아 ─
+  { id:'SB',   name:'솔로몬 제도',             en:'SOLOMON ISLANDS',               lat:-9.5,  lng:160.0,  tension:.58, type:'contested',  desc:'중국 안보 협정. 미국 우려. 태평양 영향력 각축.',
+    keywords:['solomon islands','china pacific','honiara','solomons'] },
+  { id:'NC',   name:'뉴칼레도니아',            en:'NEW CALEDONIA',                 lat:-21.5, lng:165.5,  tension:.62, type:'contested',  desc:'독립 운동 폭동. 프랑스 통치 반발. 카낙 원주민 충돌.',
+    keywords:['new caledonia','kanak','noumea','caledonia independence'] },
+  { id:'PG',   name:'파푸아뉴기니',            en:'PAPUA NEW GUINEA',              lat:-7.0,  lng:145.0,  tension:.65, type:'conflict',   desc:'부족 전쟁 지속. 자원 개발 갈등. 지역사회 무장 충돌.',
+    keywords:['papua new guinea','png tribal','highland conflict'] },
+  { id:'TL',   name:'동티모르',               en:'TIMOR-LESTE',                   lat:-8.5,  lng:125.5,  tension:.48, type:'open',       desc:'독립 후 정치 불안 잔존. 호주와 가스전 협상.',
+    keywords:['timor leste','east timor','dili','timorese'] },
+
+  // ─ 주요 국가 모니터링 ─
+  { id:'RU',   name:'러시아',                 en:'RUSSIA',                        lat:58.0,  lng:65.0,   tension:.75, type:'restricted', desc:'서방 제재 강화. 전쟁경제 전환. 반전 시위 탄압.',
+    keywords:['russia sanction','russian economy','kremlin','russia nato','moscow'] },
+  { id:'KR',   name:'한국 정세',              en:'SOUTH KOREA',                   lat:37.0,  lng:128.0,  tension:.55, type:'restricted', desc:'계엄령 사태 후 정치 불안. 미군 주둔. THAAD 갈등.',
+    keywords:['south korea','thaad','yoon','korea election','martial law korea'] },
+  { id:'JP',   name:'일본 재무장',            en:'JAPAN (REMILITARIZATION)',      lat:36.0,  lng:138.0,  tension:.40, type:'restricted', desc:'방위비 GDP 2% 증액. 반격능력 보유 선언. 헌법 개정.',
+    keywords:['japan defense','jsdf','japan military','japan rearm','japanese army'] },
+  { id:'AU-CN', name:'호주-중국 긴장',        en:'AUSTRALIA–CHINA',               lat:-28.0, lng:130.0,  tension:.45, type:'contested',  desc:'AUKUS 핵잠수함. 무역 갈등. 대중국 견제 지속.',
+    keywords:['australia china','aukus','canberra beijing','australia submarine'] },
+  { id:'VN',   name:'베트남',                en:'VIETNAM',                        lat:16.0,  lng:107.5,  tension:.50, type:'restricted', desc:'남중국해 영토 수호. 중국과 어선 충돌 반복.',
+    keywords:['vietnam','hanoi','vietnamese','viet'] },
+  { id:'ID',   name:'인도네시아',             en:'INDONESIA',                     lat:-2.5,  lng:118.0,  tension:.45, type:'open',       desc:'나투나 해역 중국 어선 침범. 종교 갈등 내재.',
+    keywords:['indonesia','jakarta','natuna','indonesian'] },
+  { id:'TR',   name:'터키',                  en:'TURKEY',                         lat:39.0,  lng:35.0,   tension:.62, type:'contested',  desc:'다자 개입. NATO·러시아 사이 균형외교. 쿠르드 탄압.',
+    keywords:['turkey','ankara','erdogan','turkish','nato turkey'] },
+  { id:'SA',   name:'사우디아라비아',         en:'SAUDI ARABIA',                  lat:23.5,  lng:45.0,   tension:.55, type:'restricted', desc:'이란과 국교 재개. 네옴 건설. 인권 탄압 논란.',
+    keywords:['saudi arabia','riyadh','mbs','crown prince','saudi'] },
+  { id:'PK-AF', name:'파키스탄-아프간 국경',  en:'PAKISTAN–AFGHANISTAN BORDER',  lat:31.5,  lng:69.5,   tension:.85, type:'conflict',   desc:'TTP 월경 공격. 아프간 난민 추방. 국경 봉쇄.',
+    keywords:['pakistan afghanistan','ttp border','durand line','paktika'] },
+  { id:'IN',   name:'인도',                  en:'INDIA',                          lat:20.5,  lng:79.0,   tension:.52, type:'restricted', desc:'힌두 민족주의 강화. 무슬림 갈등. 국경 분쟁 다발.',
+    keywords:['india','modi','new delhi','hindu muslim india','indian border'] },
 ];
 
 // ── Canvas Setup ─────────────────────────────────────────────────
@@ -780,7 +936,9 @@ function updateStats() {
   const cl = ZONES.filter(z=>z.type==='closed').length;
   const op = ZONES.filter(z=>z.type==='open').length;
   const av = ZONES.reduce((s,z)=>s+z.tension,0)/ZONES.length;
-  document.getElementById('s-war').textContent      = wr;
+  document.getElementById('s-total').textContent      = 195;
+  document.getElementById('s-monitoring').textContent = ZONES.length;
+  document.getElementById('s-war').textContent        = wr;
   document.getElementById('s-conflict').textContent = cf;
   document.getElementById('s-closed').textContent   = cl;
   document.getElementById('s-open').textContent     = op;
@@ -805,58 +963,74 @@ const DEFAULT_TICKER = '▸ 한국-북한 DMZ 총격 사건 / GUNFIRE AT KOREA D
 // 1) GDELT 실제 연결 시도 (성공하면 실제 헤드라인 사용)
 // 2) 실패 시 지역별 동적 뉴스 생성 (긴장도·타입 기반, 시각 포함)
 
+// 언론사명 한국화
+const SOURCE_KO = { 'BBC':'BBC', 'Al Jazeera':'알자지라', 'Reuters':'로이터', 'AP':'AP통신', 'GDELT':'GDELT', 'NEWS':'해외언론' };
+
 const NEWS_TEMPLATES = {
   war: [
-    z => `▸ [속보] ${z.name} 전선 이동 감지 — 미사일 ${Math.floor(Math.random()*8+2)}발 발사 / FRONTLINE SHIFT DETECTED`,
-    z => `▸ [긴급] ${z.name} 민간인 대피령 / CIVILIAN EVACUATION ORDER — ${z.en}`,
-    z => `▸ ${z.name} 교전 격화, 국제사회 즉각 대응 요구 / FIGHTING INTENSIFIES`,
-    z => `▸ UN 안보리, ${z.en} 긴급 회의 소집 / UNSC EMERGENCY SESSION`,
-    z => `▸ ${z.name} 폭격 피해 민간 시설 확인 / CIVILIAN INFRASTRUCTURE HIT`,
-    z => `▸ [속보] ${z.en} — 사상자 수 집계 중 / CASUALTIES BEING COUNTED`,
+    z => `▸ [속보] ${z.name} 전선 이동 감지 — 미사일 ${Math.floor(Math.random()*8+2)}발 발사 확인`,
+    z => `▸ [긴급] ${z.name} 민간인 대피령 발령 — 교전 지속 중`,
+    z => `▸ ${z.name} 교전 격화, 국제사회 즉각 대응 촉구`,
+    z => `▸ UN 안보리, ${z.name} 사태 긴급 회의 소집`,
+    z => `▸ ${z.name} 폭격 — 민간 시설 피해 확인 중`,
+    z => `▸ [속보] ${z.name} 사상자 집계 중, 인도지원 요청`,
+    z => `▸ ${z.name} 휴전 협상 결렬 — 전투 재개`,
   ],
   conflict: [
-    z => `▸ ${z.name} 무장 충돌 발생 / ARMED CLASHES REPORTED — ${z.en}`,
-    z => `▸ ${z.name} 긴장도 ${(z.tension*100).toFixed(0)}% — 국경 통제 강화 / BORDER CONTROLS TIGHTENED`,
-    z => `▸ 외교부, ${z.name} 여행 경보 격상 / TRAVEL ADVISORY ELEVATED`,
-    z => `▸ ${z.en} — 협상 결렬, 재충돌 우려 / TALKS COLLAPSE`,
+    z => `▸ ${z.name} 무장 충돌 발생 — 국경 봉쇄 강화`,
+    z => `▸ ${z.name} 긴장도 ${(z.tension*100).toFixed(0)}% — 군 병력 집결 포착`,
+    z => `▸ 외교부, ${z.name} 여행 경보 2단계 격상`,
+    z => `▸ ${z.name} 협상 결렬 — 재충돌 우려 고조`,
+    z => `▸ ${z.name} 국경 완충지대 총격 사건 발생`,
   ],
   closed: [
-    z => `▸ ${z.name} 월경 시도 ${Math.floor(Math.random()*30+5)}건 차단 / CROSSING ATTEMPTS INTERCEPTED`,
-    z => `▸ ${z.name} 비무장화 회의 무기한 연기 / DEMILITARIZATION TALKS SUSPENDED`,
-    z => `▸ ${z.en} — 감시 드론 격추 사건 / SURVEILLANCE DRONE DOWNED`,
+    z => `▸ ${z.name} 불법 월경 시도 ${Math.floor(Math.random()*30+5)}건 적발`,
+    z => `▸ ${z.name} 비무장화 회담 무기한 연기`,
+    z => `▸ ${z.name} 감시 드론 격추 — 양측 긴장 고조`,
+    z => `▸ ${z.name} 병력 증강 움직임 위성으로 포착`,
   ],
   restricted: [
-    z => `▸ ${z.name} 이민 행렬 ${Math.floor(Math.random()*200+100)}명 통제 / MIGRANTS INTERCEPTED AT ${z.en}`,
-    z => `▸ ${z.name} 임시 국경 폐쇄 발령 / TEMPORARY BORDER CLOSURE`,
+    z => `▸ ${z.name} 이주민 ${Math.floor(Math.random()*200+100)}명 국경 차단`,
+    z => `▸ ${z.name} 임시 국경 폐쇄 조치 발령`,
+    z => `▸ ${z.name} 밀수 루트 단속 — 카르텔 충돌`,
   ],
   contested: [
-    z => `▸ ${z.name} 영유권 분쟁 — 군함 접근 포착 / NAVAL VESSEL DETECTED`,
-    z => `▸ ${z.en} 긴장 고조, 외교 회담 긴급 소집 / DIPLOMATIC TALKS CALLED`,
+    z => `▸ ${z.name} 영유권 분쟁 — 군함 접근 포착`,
+    z => `▸ ${z.name} 긴장 고조 — 긴급 외교 회담 소집`,
+    z => `▸ ${z.name} 상공 무인기 침범 확인`,
   ],
   open: [
-    z => `▸ ${z.name} 통행량 정상 / TRAFFIC NORMAL AT ${z.en}`,
+    z => `▸ ${z.name} 국경 통행량 정상 유지 중`,
   ],
 };
 
 function generateDynamicTicker() {
-  // 긴장도 높은 순 정렬, 상위 존들의 뉴스 동적 생성
-  const sorted = [...ZONES].sort((a, b) => b.tension - a.tension);
-  const now    = new Date();
-  const timeStr = now.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'});
+  const sorted  = [...ZONES].sort((a, b) => b.tension - a.tension);
+  const nowTime = new Date().toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'});
 
   const items = [];
   sorted.slice(0, 20).forEach((z, i) => {
     const templates = NEWS_TEMPLATES[z.type] || NEWS_TEMPLATES.restricted;
     const tpl = templates[Math.floor((Date.now() / 60000 + i * 3) % templates.length)];
-    items.push(tpl(z) + ` [${timeStr}]`);
+
+    // 실제 뉴스 있으면 출처·시각 표시
+    if (z.recentNews?.length) {
+      const n = z.recentNews[0];
+      const srcKo  = SOURCE_KO[n.source] || n.source;
+      const nTime  = n.pubDate
+        ? new Date(n.pubDate).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'})
+        : nowTime;
+      items.push(`${tpl(z)}  [${srcKo} ${nTime}]`);
+    } else {
+      items.push(`${tpl(z)}  [${nowTime}]`);
+    }
   });
 
-  // 정적 배경 뉴스 추가
   items.push(
-    '▸ 유엔 난민기구 UNHCR: 전세계 강제이주민 1억 명 초과 / GLOBAL DISPLACED EXCEED 100M',
-    '▸ 국제앰네스티, 국경 폭력 보고서 발표 / AMNESTY INTERNATIONAL BORDER VIOLENCE REPORT',
-    '▸ SIPRI 세계 군비지출 사상 최고치 / GLOBAL MILITARY SPENDING AT RECORD HIGH',
-    '▸ 세계식량계획 WFP: 분쟁지역 식량 위기 심화 / FOOD CRISIS DEEPENS IN CONFLICT ZONES',
+    `▸ 유엔 난민기구 UNHCR: 전세계 강제이주민 1억 명 초과  [${nowTime}]`,
+    `▸ 국제앰네스티: 국경 폭력 보고서 발표  [${nowTime}]`,
+    `▸ SIPRI: 세계 군비지출 사상 최고치 경신  [${nowTime}]`,
+    `▸ 세계식량계획 WFP: 분쟁지역 기근 위기 심화  [${nowTime}]`,
   );
 
   return items.join('   ');
@@ -947,10 +1121,10 @@ async function fetchLiveNews() {
     });
     const display = (relevant.length >= 5 ? relevant : allItems).slice(0, 20);
 
-    const headlines = display.map(a => `▸ [${a._source}] ${a.title.slice(0, 85)}`).join('   ');
-    if (tickEl) tickEl.textContent = headlines + '   ' + generateDynamicTicker();
-
     applyArticlesToZones(allItems.map(i => ({ title: i.title, pubDate: i.pubDate, _source: i._source })));
+    // 존 긴장도·실시간 뉴스 반영 후 한국어 티커 생성
+    if (tickEl) tickEl.textContent = generateDynamicTicker();
+
     liveSource = succeeded.map(s => s.source).join('·');
     el.textContent = liveSource + ' 연결 ' + new Date().toLocaleTimeString('ko-KR');
     el.style.color = '#00ff88';
@@ -961,9 +1135,8 @@ async function fetchLiveNews() {
   try {
     const d = await tryGdelt();
     if (d.articles?.length) {
-      const headlines = d.articles.slice(0, 15).map(a => '▸ [GDELT] ' + a.title.slice(0, 85)).join('   ');
-      if (tickEl) tickEl.textContent = headlines + '   ' + generateDynamicTicker();
-      applyArticlesToZones(d.articles.map(a => ({ title: a.title })));
+      applyArticlesToZones(d.articles.map(a => ({ title: a.title, _source: 'GDELT' })));
+      if (tickEl) tickEl.textContent = generateDynamicTicker();
       liveSource = 'GDELT';
       el.textContent = 'GDELT 연결 ' + new Date().toLocaleTimeString('ko-KR');
       el.style.color = '#ffaa00';
