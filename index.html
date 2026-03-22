@@ -542,16 +542,74 @@ for (let i = 0; i < 3000; i++) {
 
 // ── World data ────────────────────────────────────────────────────
 let worldBorders = null, worldLand = null;
+let conflictBorders = []; // { mesh, zone } 쌍 — 긴장 국경선
+
+// 국가 쌍 ISO 번호 → ZONE id 매핑 (육상·해상 실접경 기준)
+const ZONE_BORDER_PAIRS = [
+  { ids:[410,408], id:'KR-KP'  },  // 한국-북한
+  { ids:[408,156], id:'KP-CN'  },  // 북한-중국
+  { ids:[376,422], id:'IL-LB'  },  // 이스라엘-레바논
+  { ids:[376,275], id:'IL-WB'  },  // 이스라엘-서안지구
+  { ids:[376,818], id:'EG-GZ'  },  // 이스라엘-이집트(라파)
+  { ids:[643,804], id:'RU-UA'  },  // 러시아-우크라이나
+  { ids:[112,616], id:'BY-PL'  },  // 벨라루스-폴란드
+  { ids:[268,643], id:'GE-RU'  },  // 조지아-러시아
+  { ids:[ 51, 31], id:'AM-AZ'  },  // 아르메니아-아제르바이잔
+  { ids:[  4,586], id:'AF-PK'  },  // 아프가니스탄-파키스탄
+  { ids:[104, 50], id:'MM-BD'  },  // 미얀마-방글라데시
+  { ids:[356,586], id:'IN-PK'  },  // 인도-파키스탄
+  { ids:[356,156], id:'IN-CN'  },  // 인도-중국
+  { ids:[792,760], id:'TR-SY'  },  // 터키-시리아
+  { ids:[364,586], id:'IR-PK'  },  // 이란-파키스탄
+  { ids:[792,300], id:'TR-GR'  },  // 터키-그리스
+  { ids:[484,840], id:'MX-US'  },  // 멕시코-미국
+  { ids:[484,320], id:'MX-GT'  },  // 멕시코-과테말라
+  { ids:[862,328], id:'VE-GY'  },  // 베네수엘라-가이아나
+  { ids:[862,170], id:'VE-CO'  },  // 베네수엘라-콜롬비아
+  { ids:[ 76,862], id:'BR-VE'  },  // 브라질-베네수엘라
+  { ids:[764,104], id:'TH-MM'  },  // 태국-미얀마
+  { ids:[792,100], id:'TR-BG'  },  // 터키-불가리아
+  { ids:[643,246], id:'RU-FI'  },  // 러시아-핀란드
+  { ids:[ 31,364], id:'AZ-IR'  },  // 아제르바이잔-이란
+  { ids:[524,356], id:'NP-IN'  },  // 네팔-인도
+  { ids:[504, 12], id:'MA-DZ'  },  // 모로코-알제리
+  { ids:[818,434], id:'EG-LY'  },  // 이집트-리비아
+  { ids:[231,232], id:'ET-ER'  },  // 에티오피아-에리트레아
+  { ids:[180,800], id:'CD-UG'  },  // 콩고-우간다
+  { ids:[180,646], id:'DRC'    },  // 콩고-르완다
+  { ids:[834,508], id:'TZ-MZ'  },  // 탄자니아-모잠비크
+  { ids:[729,728], id:'SU-SD'  },  // 수단-남수단
+  { ids:[682,887], id:'SA-YE'  },  // 사우디-예멘
+  { ids:[116,764], id:'KH-TH'  },  // 캄보디아-태국
+  { ids:[156,704], id:'CN-VN'  },  // 중국-베트남
+  { ids:[860,762], id:'UZ-TJ'  },  // 우즈벡-타지크
+  { ids:[348,688], id:'HU-RS'  },  // 헝가리-세르비아
+  { ids:[ 70,688], id:'BA'     },  // 보스니아-세르비아
+];
 
 fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
   .then(r => r.json())
   .then(world => {
     worldBorders = topojson.mesh(world, world.objects.countries, (a,b) => a !== b);
     worldLand    = topojson.feature(world, world.objects.land);
+
+    // 긴장 국경선 mesh 생성
+    const zoneMap = {};
+    ZONES.forEach(z => { zoneMap[z.id] = z; });
+    ZONE_BORDER_PAIRS.forEach(pair => {
+      const zone = zoneMap[pair.id];
+      if (!zone) return;
+      try {
+        const mesh = topojson.mesh(world, world.objects.countries, (a, b) =>
+          (a.id === pair.ids[0] && b.id === pair.ids[1]) ||
+          (a.id === pair.ids[1] && b.id === pair.ids[0])
+        );
+        if (mesh && mesh.coordinates && mesh.coordinates.length > 0)
+          conflictBorders.push({ mesh, zone });
+      } catch(e) {}
+    });
   })
-  .catch(() => {
-    // Globe renders without border detail lines
-  });
+  .catch(() => {});
 
 // ── Color helpers ────────────────────────────────────────────────
 function tColorStr(tension, type, t) {
@@ -681,6 +739,33 @@ function draw(now) {
     gpath(worldBorders);
     ctx.stroke();
     ctx.restore();
+  }
+
+  // ── Conflict border lines (긴장도별 색상) ────────────────────────
+  if (conflictBorders.length > 0) {
+    conflictBorders.forEach(({ mesh, zone }) => {
+      const t  = zone.tension;
+      const tw = zone.type;
+      const isWar  = tw === 'war';
+      const pulse  = Math.sin(animT * (isWar ? 5 : 2) + zone.lat * 0.3) * 0.3 + 0.7;
+      let r, g, b;
+      if      (tw === 'war')        { r=255; g=20;  b=20;  }
+      else if (tw === 'conflict')   { r=255; g=80;  b=0;   }
+      else if (tw === 'closed')     { r=200; g=0;   b=30;  }
+      else if (tw === 'contested')  { r=255; g=200; b=0;   }
+      else if (tw === 'restricted') { r=255; g=130; b=0;   }
+      else                          { r=0;   g=220; b=100; }
+      const alpha = Math.min(0.95, 0.45 + t * 0.55) * (isWar ? pulse : 1);
+      ctx.save();
+      ctx.shadowBlur  = (isWar ? 18 : 8) * t;
+      ctx.shadowColor = `rgb(${r},${g},${b})`;
+      ctx.strokeStyle = `rgba(${r},${g},${b},${alpha.toFixed(2)})`;
+      ctx.lineWidth   = isWar ? 2.5 + t * 1.5 : (t > .78 ? 2.0 : 1.4);
+      ctx.beginPath();
+      gpath(mesh);
+      ctx.stroke();
+      ctx.restore();
+    });
   }
 
   // ── Globe outline ─────────────────────────────────────────────
