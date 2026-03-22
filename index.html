@@ -1201,8 +1201,18 @@ async function fetchLiveNews() {
     const display = (relevant.length >= 5 ? relevant : allItems).slice(0, 20);
 
     applyArticlesToZones(allItems.map(i => ({ title: i.title, pubDate: i.pubDate, _source: i._source })));
-    // 존 긴장도·실시간 뉴스 반영 후 한국어 티커 생성
-    if (tickEl) tickEl.textContent = generateDynamicTicker();
+    // 실제 헤드라인으로 티커 구성
+    if (tickEl) {
+      const timeStr = t => {
+        try { return new Date(t).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}); } catch(e){ return ''; }
+      };
+      const tickItems = display.map(a => {
+        const src = SOURCE_KO[a._source] || a._source;
+        const tm  = a.pubDate ? timeStr(a.pubDate) : '';
+        return `▸ ${a.title}  [${src}${tm?' '+tm:''}]`;
+      });
+      tickEl.textContent = tickItems.join('   ');
+    }
 
     liveSource = succeeded.map(s => s.source).join('·');
     el.textContent = liveSource + ' 연결 ' + new Date().toLocaleTimeString('ko-KR');
